@@ -126,32 +126,14 @@ cd /var/www/pterodactyl && php artisan cache:clear
 bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/repair.sh)
 ```
 
-## 📸 Preview Tema
-
-### 🌟 Stellar Theme
-- Design modern dengan dark mode elegant
-- Responsive di semua device
-- Animasi smooth dan user-friendly
-
-### 💰 Billing Theme
-- Optimized untuk sistem billing
-- Dashboard yang clean dan professional
-- Integration dengan payment gateway
-
-### 🔮 Enigma Theme
-- Tampilan futuristik dengan efek glassmorphism
-- Color scheme yang eye-catching
-- Perfect untuk gaming server
-
 ## 📞 Support & Bantuan
 
 ### 🆘 Butuh Bantuan?
-- 💬 **Discord:** [Join Server](https://discord.gg/Clorinde-ID)
 - 📧 **Email:** wiraliwirya@gmail.com
 - 🐛 **Bug Report:** [GitHub Issues](https://github.com/Liwirya/Panel-Installer/issues)
 
 ### 🤝 Kontribusi
-Kami menerima kontribusi dari komunitas! Silakan:
+Kami menerima kontribusi dari kalian! Silakan:
 - Fork repository ini
 - Buat branch baru untuk fitur/bugfix
 - Submit pull request dengan deskripsi yang jelas
@@ -180,11 +162,9 @@ copies or substantial portions of the Software.
 
 ## ⭐ Dukung Project Ini
 
-Jika project ini membantu Anda, berikan ⭐ di GitHub dan share ke teman-teman!
+Jika project ini membantu Anda, berikan bintang di GitHub dan share ke teman teman!
 
 ### 💖 Donasi
-- **PayPal:** [Donate Here](https://paypal.me/liwirya)
-- **Ko-fi:** [Buy Me Coffee](https://ko-fi.com/liwirya)
 - **Trakteer:** [Trakteer Saya](https://trakteer.id/liwirya)
 
 ---

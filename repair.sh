@@ -456,7 +456,7 @@ EOF
         echo -e "${GRAY}💾 Backup tersimpan di: $BACKUP_DIR${NC}"
     fi
     
-    echo -e "${GRAY}📱 Support: @LineXCloud | 🏢 Liwirya Team${NC}"
+    echo -e "${GRAY}📱 Support: @senkaliwirya | 🏢 Clorinde ID Team${NC}"
     echo ""
 }
 

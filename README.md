@@ -159,7 +159,7 @@ Kami menerima kontribusi dari komunitas! Silakan:
 ## 📄 Lisensi & Credits
 
 ### 👨‍💻 Developer
-- **Creator:** [Line](https://github.com/Liwirya) ⭐
+- **Creator:** [Liwirya](https://github.com/Liwirya) 👨‍💻
 - **Community Contributors:** [Lihat semua](https://github.com/Liwirya/Panel-Installer/contributors)
 
 ### 📜 Lisensi

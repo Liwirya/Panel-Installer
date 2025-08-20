@@ -255,193 +255,6 @@ EOF
     sleep 3
 }
 
-install_theme() {
-    while true; do
-        clear
-        print_header "                    PILIH TEMA PANEL                    "
-        
-        echo -e "${WHITE}📋 Pilih tema yang ingin diinstall:${NC}"
-        echo -e "${CYAN}1.${NC} 🌟 Stellar Theme (Modern & Elegant)"
-        echo -e "${CYAN}2.${NC} 💰 Billing Theme (Dengan sistem billing)"
-        echo -e "${CYAN}3.${NC} 🔮 Enigma Theme (Dark & Mysterious)"
-        echo -e "${CYAN}4.${NC} 🎨 Custom Theme (Upload sendiri)"
-        echo -e "${RED}x.${NC} 🔙 Kembali ke menu utama"
-        echo
-        echo -e "${YELLOW}Masukkan pilihan (1/2/3/4/x):${NC}"
-        read -r SELECT_THEME
-        
-        case "$SELECT_THEME" in
-            1)
-                THEME_URL="https://github.com/Liwirya/Panel-Installer/raw/main/stellar.zip"
-                THEME_NAME="stellar"
-                install_selected_theme "$THEME_URL" "$THEME_NAME"
-                break
-                ;;
-            2)
-                THEME_URL="https://github.com/Liwirya/Panel-Installer/raw/main/billing.zip"
-                THEME_NAME="billing"
-                install_billing_theme "$THEME_URL" "$THEME_NAME"
-                break
-                ;;
-            3)
-                THEME_URL="https://github.com/Liwirya/Panel-Installer/raw/main/enigma.zip"
-                THEME_NAME="enigma"
-                install_enigma_theme "$THEME_URL" "$THEME_NAME"
-                break
-                ;;
-            4)
-                install_custom_theme
-                break
-                ;;
-            x)
-                return
-                ;;
-            *)
-                print_error "Pilihan tidak valid! Silakan coba lagi."
-                sleep 2
-                ;;
-        esac
-    done
-}
-
-install_selected_theme() {
-    local THEME_URL=$1
-    local THEME_NAME=$2
-    
-    print_header "              INSTALASI TEMA ${THEME_NAME^^}               "
-    
-    # Backup existing theme
-    print_status "💾 Membuat backup tema lama..."
-    if [ -d "/var/www/pterodactyl" ]; then
-        cp -rf /var/www/pterodactyl /var/www/pterodactyl.backup.$(date +%Y%m%d_%H%M%S)
-    fi
-    
-    # Remove old theme files
-    if [ -e /root/pterodactyl ]; then
-        rm -rf /root/pterodactyl
-    fi
-    
-    # Download and extract theme
-    print_status "⬇️  Mengunduh tema $THEME_NAME..."
-    wget -q "$THEME_URL" -O "/root/${THEME_NAME}.zip"
-    
-    if [ $? -ne 0 ]; then
-        print_error "Gagal mengunduh tema!"
-        return 1
-    fi
-    
-    print_status "📦 Mengekstrak tema..."
-    unzip -o "/root/${THEME_NAME}.zip" -d /root/
-    
-    # Install theme
-    print_status "🎨 Menginstall tema..."
-    cp -rfT /root/pterodactyl /var/www/pterodactyl
-    
-    # Install Node.js and dependencies
-    print_status "📦 Menginstall Node.js dan dependencies..."
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - >> "$LOG_FILE" 2>&1
-    apt install -y nodejs >> "$LOG_FILE" 2>&1
-    npm install -g yarn >> "$LOG_FILE" 2>&1
-    
-    # Build theme
-    cd /var/www/pterodactyl
-    yarn install >> "$LOG_FILE" 2>&1
-    yarn add react-feather >> "$LOG_FILE" 2>&1
-    php artisan migrate --force >> "$LOG_FILE" 2>&1
-    yarn build:production >> "$LOG_FILE" 2>&1
-    php artisan view:clear >> "$LOG_FILE" 2>&1
-    php artisan config:clear >> "$LOG_FILE" 2>&1
-    
-    # Set permissions
-    chown -R www-data:www-data /var/www/pterodactyl/*
-    
-    # Cleanup
-    rm -rf "/root/${THEME_NAME}.zip" /root/pterodactyl
-    
-    print_status "✅ Tema $THEME_NAME berhasil diinstall!"
-    sleep 3
-}
-
-install_billing_theme() {
-    local THEME_URL=$1
-    local THEME_NAME=$2
-    
-    print_header "              INSTALASI TEMA BILLING               "
-    
-    install_selected_theme "$THEME_URL" "$THEME_NAME"
-    
-    print_status "💰 Mengkonfigurasi sistem billing..."
-    cd /var/www/pterodactyl
-    php artisan billing:install stable >> "$LOG_FILE" 2>&1
-    
-    print_status "✅ Tema billing dengan sistem pembayaran berhasil diinstall!"
-    print_warning "ℹ️  Konfigurasi payment gateway melalui panel admin."
-    sleep 3
-}
-
-install_enigma_theme() {
-    local THEME_URL=$1
-    local THEME_NAME=$2
-    
-    print_header "              INSTALASI TEMA ENIGMA                "
-    
-    echo -e "${CYAN}🔗 Masukkan link WhatsApp (https://wa.me/...):${NC}"
-    read -r LINK_WA
-    while ! validate_url "$LINK_WA"; do
-        print_error "Format URL tidak valid!"
-        echo -e "${CYAN}🔗 Masukkan link WhatsApp (https://wa.me/...):${NC}"
-        read -r LINK_WA
-    done
-    
-    echo -e "${CYAN}👥 Masukkan link grup (https://...):${NC}"
-    read -r LINK_GROUP
-    while ! validate_url "$LINK_GROUP"; do
-        print_error "Format URL tidak valid!"
-        echo -e "${CYAN}👥 Masukkan link grup (https://...):${NC}"
-        read -r LINK_GROUP
-    done
-    
-    echo -e "${CYAN}📺 Masukkan link channel (https://...):${NC}"
-    read -r LINK_CHNL
-    while ! validate_url "$LINK_CHNL"; do
-        print_error "Format URL tidak valid!"
-        echo -e "${CYAN}📺 Masukkan link channel (https://...):${NC}"
-        read -r LINK_CHNL
-    done
-    
-    print_status "⬇️  Mengunduh tema enigma..."
-    rm -rf /root/pterodactyl
-    wget -q "$THEME_URL" -O "/root/enigma.zip"
-    unzip -o "/root/enigma.zip" -d /root/
-    
-    print_status "🔧 Mengkustomisasi tema dengan informasi Anda..."
-    if [ -f "/root/pterodactyl/resources/scripts/components/dashboard/DashboardContainer.tsx" ]; then
-        sed -i "s|LINK_WA|$LINK_WA|g" /root/pterodactyl/resources/scripts/components/dashboard/DashboardContainer.tsx
-        sed -i "s|LINK_GROUP|$LINK_GROUP|g" /root/pterodactyl/resources/scripts/components/dashboard/DashboardContainer.tsx
-        sed -i "s|LINK_CHNL|$LINK_CHNL|g" /root/pterodactyl/resources/scripts/components/dashboard/DashboardContainer.tsx
-    fi
-    
-    install_selected_theme "$THEME_URL" "enigma"
-}
-
-install_custom_theme() {
-    print_header "               INSTALASI TEMA CUSTOM                "
-    
-    echo -e "${CYAN}🔗 Masukkan URL tema custom (.zip):${NC}"
-    read -r CUSTOM_URL
-    
-    while ! validate_url "$CUSTOM_URL"; do
-        print_error "Format URL tidak valid!"
-        echo -e "${CYAN}🔗 Masukkan URL tema custom (.zip):${NC}"
-        read -r CUSTOM_URL
-    done
-    
-    echo -e "${CYAN}📛 Masukkan nama tema:${NC}"
-    read -r CUSTOM_NAME
-    
-    install_selected_theme "$CUSTOM_URL" "$CUSTOM_NAME"
-}
-
 uninstall_theme() {
     print_header "                HAPUS TEMA PANEL                "
     
@@ -749,25 +562,24 @@ display_menu() {
     echo -e "${BLUE}📦 INSTALASI & SETUP:${NC}"
     echo -e "  ${CYAN}1.${NC}  🚀 Install Pterodactyl Panel"
     echo -e "  ${CYAN}2.${NC}  🖥️  Install Wings (Node)"
-    echo -e "  ${CYAN}3.${NC}  🎨 Install Tema Panel"
-    echo -e "  ${CYAN}4.${NC}  ⚙️  Konfigurasi Wings"
+    echo -e "  ${CYAN}3.${NC}  ⚙️  Konfigurasi Wings"
     echo
     echo -e "${GREEN}🔧 MANAGEMENT:${NC}"
-    echo -e "  ${CYAN}5.${NC}  🏗️  Buat Node & Lokasi"
-    echo -e "  ${CYAN}6.${NC}  👤 Buat User Admin"
-    echo -e "  ${CYAN}7.${NC}  💾 Backup Panel"
-    echo -e "  ${CYAN}8.${NC}  📊 Info Sistem"
+    echo -e "  ${CYAN}4.${NC}  🏗️  Buat Node & Lokasi"
+    echo -e "  ${CYAN}5.${NC}  👤 Buat User Admin"
+    echo -e "  ${CYAN}6.${NC}  💾 Backup Panel"
+    echo -e "  ${CYAN}7.${NC}  📊 Info Sistem"
     echo
     echo -e "${YELLOW}🛠️  MAINTENANCE:${NC}"
-    echo -e "  ${CYAN}9.${NC}  🗑️  Uninstall Tema"
-    echo -e "  ${CYAN}10.${NC} 🗑️  Uninstall Panel"
-    echo -e "  ${CYAN}11.${NC} 🔑 Ubah Password VPS"
+    echo -e "  ${CYAN}8.${NC}  🗑️  Uninstall Tema"
+    echo -e "  ${CYAN}9.${NC} 🗑️  Uninstall Panel"
+    echo -e "  ${CYAN}10.${NC} 🔑 Ubah Password VPS"
     echo
     echo -e "${PURPLE}🎯 TOOLS TAMBAHAN:${NC}"
-    echo -e "  ${CYAN}12.${NC} 🔄 Restart Semua Service"
-    echo -e "  ${CYAN}13.${NC} 🧹 Bersihkan Cache"
-    echo -e "  ${CYAN}14.${NC} 📝 View Logs"
-    echo -e "  ${CYAN}15.${NC} 🌟 Update Script"
+    echo -e "  ${CYAN}11.${NC} 🔄 Restart Semua Service"
+    echo -e "  ${CYAN}12.${NC} 🧹 Bersihkan Cache"
+    echo -e "  ${CYAN}13.${NC} 📝 View Logs"
+    echo -e "  ${CYAN}14.${NC} 🌟 Update Script"
     echo
     echo -e "  ${RED}x.${NC}  🚪 Keluar"
     echo
@@ -810,7 +622,6 @@ clear_cache() {
         php artisan route:clear >> "$LOG_FILE" 2>&1
     fi
     
-    # Clear package cache
     apt autoclean && apt autoremove -y >> "$LOG_FILE" 2>&1
     
     print_status "✅ Cache berhasil dibersihkan!"
@@ -999,50 +810,47 @@ main() {
                 ;;
             2)
                 install_wings
-                ;;
+                ;;           
             3)
-                install_theme
-                ;;
-            4)
                 configure_wings
                 ;;
-            5)
+            4)
                 create_node
                 ;;
-            6)
+            5)
                 create_admin_user
                 ;;
-            7)
+            6)
                 backup_panel
                 ;;
-            8)
+            7)
                 show_system_info
                 ;;
-            9)
+            8)
                 uninstall_theme
                 ;;
-            10)
+            9)
                 uninstall_panel
                 ;;
-            11)
+            10)
                 change_vps_password
                 ;;
-            12)
+            11)
                 restart_services
                 ;;
-            13)
+            12)
                 clear_cache
                 ;;
-            14)
+            13)
                 view_logs
                 ;;
-            15)
+            14)
                 update_script
                 ;;
-            16)
+            15)
                 optimize_system
                 ;;
-            17)
+            16)
                 security_hardening
                 ;;
             x)

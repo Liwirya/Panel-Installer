@@ -19,7 +19,7 @@ Tools ini dimana digunakan / membantu user dalam penginstallan panel ptreodactyl
 bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh)
 ```
 
-> **Catatan:** Pastikan dalam menjalankan command di atas wajih menggunakann vps dengan user root atau menggunakan `sudo`
+> **Catatan:** Pastikan dalam menjalankan command di atas wajib dengan vps atau menggunakan `sudo`
 
 ### 🛠️ Fitur Unggupan
 - 🔧 **Instalasi Otomatis** - Install Panel Ptreodactyl secara otomatis

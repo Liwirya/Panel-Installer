@@ -11,7 +11,7 @@
 
 ## 📋 Deskripsi
 
-Tools digunakan dalam penginstalan panel ptreodactyl (install node, wings, serta uninstall ) secara otomatis, berserta tema yang dapat diinstal dan diunistall kembali ke semula
+Tools digunakan dalam penginstallan panel ptreodactyl (install node, wings, serta uninstall ) secara otomatis, berserta tema yang dapat diinstal dan diunistall kembali ke semula
 
 ## ⚡ Instalasi Cepat
 
@@ -41,7 +41,7 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/in
 ## 🔑 Kode Akses
 
 ```
-Token: linebaik
+Token: Liwirya2025
 ```
 
 > **Penting:** Kode token diperlukan untuk mengakses installer. Pastikan memasukkan token yang benar.
@@ -90,7 +90,7 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/in
 
 ### 3. Ikuti Menu Interaktif
 - Pilih tema yang ingin diinstall
-- Masukkan kode token: `linebaik`
+- Masukkan kode token: `Liwirya2025`
 - Tunggu proses instalasi selesai
 - Refresh browser untuk melihat tema baru yg udh diinstall
 

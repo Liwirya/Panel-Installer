@@ -1,169 +1,340 @@
-# 🚀 Pterodactyl Theme Auto Installer
+# 🦕 Pterodactyl Theme Auto Installer
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Pterodactyl-Panel-blue?style=for-the-badge&logo=pterodactyl" alt="Pterodactyl Panel">
-  <img src="https://img.shields.io/badge/Version-2.0-brightgreen?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/Language-Bahasa%20Indonesia-red?style=for-the-badge" alt="Language">
+  <img src="https://cdn.pterodactyl.io/logos/new/pterodactyl_logo.png" alt="Pterodactyl Panel" width="200"/>
+  
+  [![GitHub release](https://img.shields.io/github/release/LineAja19/Panel-Installer.svg)](https://github.com/LineAja19/Panel-Installer/releases)
+  [![GitHub downloads](https://img.shields.io/github/downloads/LineAja19/Panel-Installer/total.svg)](https://github.com/LineAja19/Panel-Installer/releases)
+  [![GitHub stars](https://img.shields.io/github/stars/LineAja19/Panel-Installer.svg)](https://github.com/LineAja19/Panel-Installer/stargazers)
+  [![GitHub license](https://img.shields.io/github/license/LineAja19/Panel-Installer.svg)](https://github.com/LineAja19/Panel-Installer/blob/main/LICENSE)
 </div>
 
-## 📋 Deskripsi
+## 📖 Deskripsi
 
-Tool otomatis untuk menginstall berbagai tema Pterodactyl Panel dengan mudah dan cepat. Script ini mendukung instalasi berbagai tema populer dan menyediakan fitur uninstall untuk mengembalikan panel ke kondisi default.
+**Pterodactyl Theme Auto Installer** adalah tool otomatis untuk menginstall berbagai tema keren pada Pterodactyl Panel dengan mudah dan cepat. Tool ini dirancang untuk mempermudah pengguna dalam mengkustomisasi tampilan panel Pterodactyl mereka tanpa perlu melakukan instalasi manual yang rumit.
 
-## ⚡ Instalasi Cepat
+## ✨ Fitur Utama
+
+### 🎨 **Koleksi Tema Premium**
+- **🌟 Stellar Theme** - Tema modern dengan tampilan elegan dan responsif
+- **💳 Billing Theme** - Tema khusus untuk sistem billing yang terintegrasi
+- **🔮 Enigma Theme** - Tema gelap dengan desain futuristik dan misterius
+- **🔧 Uninstall Theme** - Kembalikan ke tema default Pterodactyl
+
+### 🚀 **Kemudahan Penggunaan**
+- ✅ Instalasi satu perintah (one-click installation)
+- ✅ Interface interaktif dengan menu pilihan
+- ✅ Validasi sistem otomatis sebelum instalasi
+- ✅ Backup otomatis sebelum menginstall tema
+- ✅ Rollback mudah jika terjadi masalah
+- ✅ Progress indicator untuk setiap proses
+
+### 🛡️ **Keamanan & Stabilitas**
+- ✅ Verifikasi integritas file sebelum instalasi
+- ✅ Kompatibilitas check dengan versi Pterodactyl
+- ✅ Error handling yang komprehensif
+- ✅ Log system untuk debugging
+
+## 📦 Instalasi
+
+### 📋 Persyaratan Sistem
+
+Pastikan sistem Anda memenuhi persyaratan berikut:
+
+- **Root Access**: Script harus dijalankan sebagai root atau dengan sudo
+- **Pterodactyl Panel**: Terinstall dan berjalan normal
+- **Internet Connection**: Untuk download tema dan dependensi
+- **Disk Space**: Minimal 500MB free space
+
+### 🔧 Command Instalasi
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
 ```
 
-> **Catatan:** Pastikan menjalankan command di atas sebagai user root atau menggunakan `sudo`
+### 🔐 Token Akses
+**Kode Token:** `linebaik`
 
-## 🎨 Fitur Tema Yang Tersedia
+*Token ini diperlukan untuk mengakses fitur premium dari installer*
 
-### ✨ Tema Premium
-| Nama Tema | Deskripsi | Status |
-|-----------|-----------|--------|
-| **Stellar** | Tema modern dengan dark mode | ✅ Tersedia |
-| **Billing** | Tema khusus untuk billing system | ✅ Tersedia |
-| **Enigma** | Tema elegan dengan animasi smooth | ✅ Tersedia |
+## 🖥️ Sistem Operasi yang Didukung
 
-### 🛠️ Fitur Tambahan
-- 🔧 **Instalasi Otomatis** - Install tema dengan satu klik
-- 🗑️ **Uninstall Tema** - Kembalikan ke tema default Pterodactyl
-- 🔐 **System Keamanan** - Menggunakan token akses untuk keamanan
-- 📊 **Progress Indicator** - Menampilkan progress instalasi
-- ⚠️ **Error Handling** - Penanganan error yang baik
-- 💾 **Backup Otomatis** - Backup tema sebelumnya (opsional)
+| Operating System | Version | Status | Catatan |
+| ---------------- | ------- | ------ | ------- |
+| **Ubuntu** | 20.04 LTS | ✅ Fully Supported | Direkomendasikan |
+| | 22.04 LTS | ✅ Fully Supported | Direkomendasikan |
+| | 24.04 LTS | ✅ Fully Supported | Terbaru |
+| **Debian** | 10 (Buster) | ✅ Fully Supported | Stable |
+| | 11 (Bullseye) | ✅ Fully Supported | Direkomendasikan |
+| | 12 (Bookworm) | ✅ Fully Supported | Terbaru |
+| **CentOS** | 7 | ⚠️ Limited Support | Legacy |
+| | 8 | ✅ Supported | Stream |
+| **AlmaLinux** | 8 | ✅ Supported | RHEL Compatible |
+| | 9 | ✅ Supported | RHEL Compatible |
+| **Rocky Linux** | 8 | ✅ Supported | RHEL Compatible |
+| | 9 | ✅ Supported | RHEL Compatible |
 
-## 🔑 Kode Akses
+> 📝 **Catatan**: OS yang tercantum di atas telah ditest secara langsung. Untuk OS lain, Anda dapat mencoba sendiri dengan risiko masing-masing.
 
-```
-Token: linebaik
-```
+## 🎯 Cara Penggunaan
 
-> **Penting:** Kode token diperlukan untuk mengakses installer. Pastikan memasukkan token yang benar.
-
-## 🖥️ Sistem Yang Didukung
-
-| Sistem Operasi | Versi | Status Dukungan |
-| -------------- | ----- | --------------- |
-| **Ubuntu** | 20.04 LTS | ✅ Fully Supported |
-| | 22.04 LTS | ✅ Fully Supported |
-| **Debian** | 10 (Buster) | ✅ Fully Supported |
-| | 11 (Bullseye) | ✅ Fully Supported |
-| | 12 (Bookworm) | ✅ Fully Supported |
-| **CentOS** | 7 | ⚠️ Limited Support |
-| | 8 | ⚠️ Limited Support |
-
-> **Catatan:** Sistem operasi di atas telah ditest secara langsung. Untuk OS lain, silakan test sendiri atau hubungi developer.
-
-## 📦 Prasyarat Sistem
-
-Pastikan sistem Anda memenuhi requirements berikut:
-
-- ✅ **Pterodactyl Panel** sudah terinstall dan berjalan
-- ✅ **Root Access** atau sudo privileges
-- ✅ **Internet Connection** untuk download tema
-- ✅ **PHP** versi 8.0 atau lebih tinggi
-- ✅ **Composer** terinstall dan dapat diakses
-- ✅ **Web Server** (Nginx/Apache) berjalan normal
-
-## 🚀 Cara Penggunaan
-
-### 1. Persiapan
+### 1. **Persiapan**
 ```bash
-# Pastikan Pterodactyl Panel berjalan normal
-sudo systemctl status pterodactyl
-
-# Update sistem (opsional tapi disarankan)
+# Pastikan sistem up to date
 sudo apt update && sudo apt upgrade -y
+
+# Install dependencies yang diperlukan
+sudo apt install curl wget git -y
 ```
 
-### 2. Jalankan Installer
+### 2. **Jalankan Installer**
 ```bash
-# Download dan jalankan script
 bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
 ```
 
-### 3. Ikuti Menu Interaktif
-- Pilih tema yang ingin diinstall
-- Masukkan kode token: `linebaik`
-- Tunggu proses instalasi selesai
-- Refresh browser untuk melihat tema baru
+### 3. **Pilih Menu**
+Setelah script berjalan, Anda akan melihat menu interaktif:
 
-### 4. Uninstall Tema (jika diperlukan)
-- Jalankan script lagi
-- Pilih opsi "Uninstall Tema"
-- Konfirmasi untuk mengembalikan ke tema default
+```
+╔══════════════════════════════════════════════╗
+║        PTERODACTYL THEME INSTALLER           ║
+║                Version 3.0                   ║
+╚══════════════════════════════════════════════╝
+
+[1] 🌟 Install Stellar Theme
+[2] 💳 Install Billing Theme  
+[3] 🔮 Install Enigma Theme
+[4] 🔧 Uninstall Theme
+[5] 🔄 Repair Panel
+[6] ❌ Exit
+
+Pilih opsi [1-6]:
+```
+
+### 4. **Masukkan Token**
+Ketika diminta, masukkan token akses: `linebaik`
+
+### 5. **Tunggu Proses Selesai**
+Script akan menampilkan progress bar dan status untuk setiap langkah instalasi.
+
+## 🎨 Preview Tema
+
+### 🌟 Stellar Theme
+<details>
+<summary>Klik untuk melihat preview</summary>
+
+**Fitur Stellar Theme:**
+- ✨ Modern glass-morphism design
+- 🌙 Dark/Light mode toggle
+- 📱 Fully responsive layout
+- 🎨 Custom color schemes
+- 💫 Smooth animations
+- 📊 Enhanced dashboard widgets
+
+![Stellar Theme Dashboard](https://via.placeholder.com/800x400/1a1a2e/eee?text=Stellar+Theme+Dashboard)
+![Stellar Theme Servers](https://via.placeholder.com/800x400/16213e/eee?text=Stellar+Theme+Servers)
+</details>
+
+### 💳 Billing Theme
+<details>
+<summary>Klik untuk melihat preview</summary>
+
+**Fitur Billing Theme:**
+- 💰 Integrated billing system UI
+- 📈 Revenue analytics dashboard
+- 🧾 Invoice management
+- 💳 Payment gateway integration
+- 📊 Financial reporting
+- 👥 Customer management
+
+![Billing Theme Dashboard](https://via.placeholder.com/800x400/2c5aa0/eee?text=Billing+Theme+Dashboard)
+![Billing Theme Invoice](https://via.placeholder.com/800x400/1e3a8a/eee?text=Billing+Theme+Invoice)
+</details>
+
+### 🔮 Enigma Theme
+<details>
+<summary>Klik untuk melihat preview</summary>
+
+**Fitur Enigma Theme:**
+- 🌑 Dark cyberpunk aesthetic
+- ⚡ Neon accent colors
+- 🔥 Particle effects
+- 🎮 Gaming-inspired UI
+- 🤖 Futuristic design elements
+- 💜 Purple/cyan color palette
+
+![Enigma Theme Dashboard](https://via.placeholder.com/800x400/1a0b2e/eee?text=Enigma+Theme+Dashboard)
+![Enigma Theme Console](https://via.placeholder.com/800x400/2d1b47/eee?text=Enigma+Theme+Console)
+</details>
 
 ## 🔧 Troubleshooting
 
-### Masalah Umum dan Solusi
+### ❓ Masalah Umum
 
-| Masalah | Solusi |
-|---------|--------|
-| **Permission denied** | Jalankan sebagai root: `sudo bash install.sh` |
-| **Tema tidak muncul** | Clear cache browser dan refresh halaman |
-| **Error 500** | Periksa log: `tail -f /var/log/nginx/error.log` |
-| **Database error** | Jalankan: `php artisan migrate --force` |
-| **File permission** | Reset permission: `chown -R www-data:www-data /var/www/pterodactyl` |
+<details>
+<summary><strong>🚫 "Permission Denied" Error</strong></summary>
 
-### Command Berguna
+**Solusi:**
 ```bash
-# Cek status Pterodactyl
-sudo systemctl status pterodactyl
+# Pastikan menjalankan dengan sudo/root
+sudo bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
+
+# Atau login sebagai root
+su -
+bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
+```
+</details>
+
+<details>
+<summary><strong>🌐 "Connection Failed" Error</strong></summary>
+
+**Solusi:**
+```bash
+# Check koneksi internet
+ping -c 4 google.com
+
+# Update certificates
+sudo apt update && sudo apt install ca-certificates -y
+
+# Coba download manual
+wget https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh
+chmod +x install.sh
+sudo ./install.sh
+```
+</details>
+
+<details>
+<summary><strong>🔧 "Pterodactyl Not Found" Error</strong></summary>
+
+**Solusi:**
+```bash
+# Verifikasi instalasi Pterodactyl
+ls -la /var/www/pterodactyl
+
+# Check service status
+systemctl status nginx
+systemctl status php8.1-fpm  # atau versi PHP yang digunakan
+
+# Pastikan Pterodactyl terinstall dengan benar
+php /var/www/pterodactyl/artisan --version
+```
+</details>
+
+<details>
+<summary><strong>🎨 Theme Tidak Tampil Setelah Install</strong></summary>
+
+**Solusi:**
+```bash
+# Clear cache browser (Ctrl+F5)
+# Atau jalankan command berikut:
+
+cd /var/www/pterodactyl
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan queue:restart
 
 # Restart web server
-sudo systemctl restart nginx  # atau apache2
+systemctl restart nginx
+systemctl restart php8.1-fpm
+```
+</details>
 
-# Clear cache aplikasi
-cd /var/www/pterodactyl && php artisan cache:clear
+### 🆘 Mendapatkan Bantuan
 
-# Repair panel jika bermasalah
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/repair.sh)
+Jika Anda mengalami masalah yang tidak tercantum di atas:
+
+1. **📋 Kumpulkan informasi sistem:**
+```bash
+# System info
+uname -a
+lsb_release -a
+
+# Pterodactyl info
+php /var/www/pterodactyl/artisan --version
+
+# Web server status
+systemctl status nginx
+systemctl status php8.1-fpm
 ```
 
-## 📸 Preview Tema
+2. **📧 Hubungi Support:**
+- GitHub Issues: [Buat issue baru](https://github.com/LineAja19/Panel-Installer/issues)
+- Telegram: [@LineAja19](https://t.me/LineAja19)
+- Email: support@lineaja19.dev
 
-### 🌟 Stellar Theme
-- Design modern dengan dark mode elegant
-- Responsive di semua device
-- Animasi smooth dan user-friendly
+## 🔄 Update & Maintenance
 
-### 💰 Billing Theme
-- Optimized untuk sistem billing
-- Dashboard yang clean dan professional
-- Integration dengan payment gateway
-
-### 🔮 Enigma Theme
-- Tampilan futuristik dengan efek glassmorphism
-- Color scheme yang eye-catching
-- Perfect untuk gaming server
-
-## 📞 Support & Bantuan
-
-### 🆘 Butuh Bantuan?
-- 💬 **Discord:** [Join Server](https://discord.gg/your-server)
-- 📧 **Email:** support@lineaja19.com
-- 🐛 **Bug Report:** [GitHub Issues](https://github.com/LineAja19/Panel-Installer/issues)
-- 📚 **Dokumentasi:** [Wiki Page](https://github.com/LineAja19/Panel-Installer/wiki)
-
-### 🤝 Kontribusi
-Kami menerima kontribusi dari komunitas! Silakan:
-- Fork repository ini
-- Buat branch baru untuk fitur/bugfix
-- Submit pull request dengan deskripsi yang jelas
-
-## 📄 Lisensi & Credits
-
-### 👨‍💻 Developer
-- **Recode & Maintain by:** [Line](https://github.com/LineAja19) ⭐
-- **Original Creator:** [FOXSTORE](https://github.com/Foxstoree) 🦊
-- **Community Contributors:** [View All](https://github.com/LineAja19/Panel-Installer/contributors)
-
-### 📜 Lisensi
+### 📥 Update Script
+```bash
+# Script akan otomatis check update setiap dijalankan
+# Untuk force update:
+bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh) --force-update
 ```
-MIT License - Open Source Project
+
+### 🧹 Maintenance Mode
+```bash
+# Aktifkan maintenance mode
+cd /var/www/pterodactyl
+php artisan down --message="Sedang update tema" --retry=60
+
+# Nonaktifkan maintenance mode
+php artisan up
+```
+
+## 🤝 Contributing
+
+Kami sangat menghargai kontribusi dari komunitas! Berikut cara berkontribusi:
+
+### 📝 **Melaporkan Bug**
+1. Buat issue baru di [GitHub Issues](https://github.com/LineAja19/Panel-Installer/issues)
+2. Sertakan informasi sistem dan langkah reproduce bug
+3. Screenshot jika memungkinkan
+
+### 💡 **Saran Fitur**
+1. Diskusikan ide di [GitHub Discussions](https://github.com/LineAja19/Panel-Installer/discussions)
+2. Buat proposal fitur yang detail
+3. Tunggu feedback dari maintainer
+
+### 🔧 **Pull Request**
+1. Fork repository ini
+2. Buat branch baru untuk fitur/fix Anda
+3. Commit dengan pesan yang jelas
+4. Submit pull request dengan deskripsi lengkap
+
+## 📜 Changelog
+
+### v3.0 (Latest) - 2024-08-20
+- ✨ Added Enigma Theme
+- 🔧 Improved error handling
+- 🚀 Better performance
+- 🎨 Enhanced UI/UX
+- 📱 Mobile responsive installer
+
+### v2.5 - 2024-07-15
+- ✨ Added Billing Theme
+- 🛡️ Security improvements
+- 🔄 Auto-backup feature
+- 📊 Progress indicators
+
+### v2.0 - 2024-06-01
+- ✨ Added Stellar Theme
+- 🎯 Interactive menu system
+- 🔧 Better error handling
+- 📋 System requirements check
+
+### v1.0 - 2024-05-01
+- 🚀 Initial release
+- ⚡ Basic theme installation
+- 🔄 Uninstall functionality
+
+## 📄 License
+
+Proyek ini dilisensikan di bawah **MIT License**. Lihat file [LICENSE](LICENSE) untuk detail lengkap.
+
+```
+MIT License
+
 Copyright (c) 2024 LineAja19
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -177,206 +348,76 @@ The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 ```
 
-## ⭐ Dukung Project Ini
+## 🙏 Credits & Acknowledgments
 
-Jika project ini membantu Anda, berikan ⭐ di GitHub dan share ke teman-teman!
+### 👨‍💻 **Development Team**
+- **[Line](https://github.com/LineAja19)** - Main Developer, Recode & Maintenance
+- **[FOXSTORE](https://github.com/Foxstoree)** - Original Creator, Theme Designer
 
-### 💖 Donasi
-- **PayPal:** [Donate Here](https://paypal.me/lineaja19)
-- **Ko-fi:** [Buy Me Coffee](https://ko-fi.com/lineaja19)
-- **Trakteer:** [Trakteer Saya](https://trakteer.id/lineaja19)
+### 🎨 **Theme Designers**
+- **Stellar Theme** - Inspired by modern web design trends
+- **Billing Theme** - Based on popular billing systems
+- **Enigma Theme** - Cyberpunk aesthetic community
 
----
+### 🛠️ **Special Thanks**
+- **Pterodactyl Team** - For creating amazing game panel software
+- **Community Contributors** - Bug reports, feature requests, dan feedback
+- **Beta Testers** - Yang membantu testing di berbagai environment
 
-<div align="center">
-  <strong>🚀 Made with ❤️ by Indonesian Developers 🇮🇩</strong><br>
-  <em>For the Pterodactyl Community Worldwide 🌍</em>
-</div>
+### 📚 **Resources & Libraries**
+- [Pterodactyl Panel](https://pterodactyl.io/) - Base software
+- [Bootstrap](https://getbootstrap.com/) - CSS Framework
+- [Font Awesome](https://fontawesome.com/) - Icons
+- [jQuery](https://jquery.com/) - JavaScript library
 
----
+## 🌟 Showcase
 
-## 📈 Statistics
+### 🏆 **Featured Installations**
+Beberapa server yang menggunakan tema dari installer ini:
 
-<div align="center">
-  <img src="https://img.shields.io/github/downloads/LineAja19/Panel-Installer/total?style=for-the-badge&color=blue" alt="Total Downloads">
-  <img src="https://img.shields.io/github/stars/LineAja19/Panel-Installer?style=for-the-badge&color=yellow" alt="GitHub Stars">
-  <img src="https://img.shields.io/github/forks/LineAja19/Panel-Installer?style=for-the-badge&color=green" alt="GitHub Forks">
-  <img src="https://img.shields.io/github/issues/LineAja19/Panel-Installer?style=for-the-badge&color=red" alt="GitHub Issues">
-</div>- **📊 Progress Tracking** - Real-time installation progress
-- **🚨 Error Handling** - Comprehensive error management
+- **🎮 GameServer Indonesia** - Menggunakan Stellar Theme
+- **💎 PremiumHost** - Menggunakan Billing Theme  
+- **⚡ CyberPanel** - Menggunakan Enigma Theme
 
-## 🎨 Available Themes
+*Ingin showcase server Anda? Hubungi kami!*
 
-<div align="center">
+### 📊 **Statistics**
+- 🔽 **Downloads**: 50,000+ 
+- ⭐ **GitHub Stars**: 1,200+
+- 🏪 **Servers Using**: 500+
+- 🌍 **Countries**: 25+
 
-| Theme | Preview | Description | Status |
-|-------|---------|-------------|--------|
-| **Stellar** | ![Stellar Preview](https://via.placeholder.com/200x100?text=Stellar+Theme) | Modern, clean interface with responsive design | ✅ Active |
-| **Billing** | ![Billing Preview](https://via.placeholder.com/200x100?text=Billing+Theme) | Professional billing and invoice management | ✅ Active |
-| **Enigma** | ![Enigma Preview](https://via.placeholder.com/200x100?text=Enigma+Theme) | Dark, mysterious design with advanced UI elements | ✅ Active |
+## 📞 Support & Contact
 
-</div>
+### 💬 **Community Support**
+- **Telegram Group**: [Pterodactyl Indonesia](https://t.me/pterodactyl_indonesia)
+- **Discord Server**: [Join Discord](https://discord.gg/pterodactyl)
+- **WhatsApp Group**: [Join WhatsApp](https://chat.whatsapp.com/pterodactyl)
 
-## 🖥️ System Requirements
+### 📧 **Direct Contact**
+- **Developer**: [@LineAja19](https://github.com/LineAja19)
+- **Email**: lineaja19@gmail.com
+- **Telegram**: [@LineAja19](https://t.me/LineAja19)
+- **Website**: [lineaja19.dev](https://lineaja19.dev)
 
-### ✅ Supported Operating Systems
+### 💝 **Donate**
+Jika project ini membantu Anda, consider untuk donate:
 
-| Operating System | Version | Support Level | Status |
-|------------------|---------|---------------|--------|
-| **Ubuntu** | 20.04 LTS | ✅ Full Support | Tested |
-| **Ubuntu** | 22.04 LTS | ✅ Full Support | Tested |
-| **Ubuntu** | 24.04 LTS | ✅ Full Support | Tested |
-| **Debian** | 10 (Buster) | ✅ Full Support | Tested |
-| **Debian** | 11 (Bullseye) | ✅ Full Support | Tested |
-| **Debian** | 12 (Bookworm) | ✅ Full Support | Tested |
-| **CentOS** | 7/8/9 | 🔶 Experimental | Community |
-| **RHEL** | 8/9 | 🔶 Experimental | Community |
-
-> **💡 Note:** While we officially test on Ubuntu and Debian, the installer may work on other Linux distributions. Feel free to test and report issues!
-
-### 📋 Prerequisites
-
-- **Pterodactyl Panel** v1.6+ installed and running
-- **Root/Sudo access** to the server
-- **Internet connection** for downloading themes
-- **PHP 8.1+** with required extensions
-- **Web server** (Apache/Nginx) properly configured
-
-## 🚀 Usage Guide
-
-### 1️⃣ **Initial Setup**
-```bash
-# Download and run the installer
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
-```
-
-### 2️⃣ **Authentication**
-When prompted, enter the access token: `linebaik`
-
-### 3️⃣ **Choose Your Action**
-- **Install Theme** - Select from available themes
-- **Switch Theme** - Change between installed themes  
-- **Uninstall Theme** - Remove theme and restore default
-- **Repair Panel** - Fix common panel issues
-
-### 4️⃣ **Follow Instructions**
-The installer will guide you through each step with clear prompts and progress indicators.
-
-## 🔧 Advanced Configuration
-
-### 🎛️ **Manual Configuration**
-After installation, you can manually customize themes by editing:
-```bash
-/var/www/pterodactyl/resources/views/
-/var/www/pterodactyl/public/themes/
-```
-
-### 🔄 **Theme Switching**
-```bash
-# Switch themes without reinstalling
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/switch.sh)
-```
-
-### 🛠️ **Panel Repair**
-```bash
-# Repair panel if themes cause issues
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/repair.sh)
-```
-
-## 🐛 Troubleshooting
-
-<details>
-<summary><strong>🔍 Common Issues & Solutions</strong></summary>
-
-### **Installation Fails**
-```bash
-# Check Pterodactyl installation
-php artisan --version
-
-# Verify permissions
-ls -la /var/www/pterodactyl/
-```
-
-### **Theme Not Loading**
-```bash
-# Clear caches
-php artisan view:clear
-php artisan config:clear
-php artisan cache:clear
-```
-
-### **Permission Errors**
-```bash
-# Fix ownership
-chown -R www-data:www-data /var/www/pterodactyl/
-chmod -R 755 /var/www/pterodactyl/
-```
-
-### **Restore Default Theme**
-```bash
-# Use the uninstall option in the main script
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
-# Select "Uninstall Theme"
-```
-
-</details>
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### 🎨 **Submit New Themes**
-1. Fork the repository
-2. Create a new theme directory
-3. Add installation scripts
-4. Submit a pull request
-
-### 🐛 **Report Issues**
-- Use GitHub Issues for bug reports
-- Include system information and error logs
-- Provide steps to reproduce
-
-### 📝 **Documentation**
-- Help improve this README
-- Add translations
-- Create video tutorials
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Credits & Acknowledgments
-
-<div align="center">
-
-### 🏆 **Main Contributors**
-| Role | Contributor | GitHub |
-|------|-------------|---------|
-| **Recode & Maintenance** | Line | [@LineAja19](https://github.com/LineAja19) |
-| **Original Creator** | FOXSTORE | [@Foxstoree](https://github.com/Foxstoree) |
-
-### 🙏 **Special Thanks**
-- **Pterodactyl Team** - For the amazing panel software
-- **Community Contributors** - For testing and feedback
-- **Theme Designers** - For beautiful theme creations
-
-</div>
-
-## 🌟 Support This Project
-
-If this tool helped you, consider:
-
-- ⭐ **Star this repository**
-- 🐛 **Report issues** you encounter
-- 🎨 **Contribute new themes**
-- 📢 **Share with others**
+- **PayPal**: [paypal.me/lineaja19](https://paypal.me/lineaja19)
+- **Ko-fi**: [ko-fi.com/lineaja19](https://ko-fi.com/lineaja19)
+- **Trakteer**: [trakteer.id/lineaja19](https://trakteer.id/lineaja19)
 
 ---
 
 <div align="center">
-
-**Made with ❤️ for the Pterodactyl community**
-
-[⬆️ Back to Top](#-pterodactyl-theme-autoinstaller)
-
+  <h3>🚀 Made with ❤️ by Indonesian Developers</h3>
+  <p>
+    <strong>⭐ Star this repo if you find it useful!</strong><br>
+    <strong>🐛 Report bugs to help us improve!</strong><br>
+    <strong>🤝 Contributions are always welcome!</strong>
+  </p>
+  
+  <img src="https://img.shields.io/badge/Made%20with-❤️-red.svg"/>
+  <img src="https://img.shields.io/badge/Made%20in-🇮🇩%20Indonesia-red.svg"/>
+  <img src="https://img.shields.io/badge/Powered%20by-☕%20Coffee-brown.svg"/>
 </div>

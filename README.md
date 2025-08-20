@@ -182,9 +182,9 @@ copies or substantial portions of the Software.
 Jika project ini membantu Anda, berikan ⭐ di GitHub dan share ke teman-teman!
 
 ### 💖 Donasi
-- **PayPal:** [Donate Here](https://paypal.me/lineaja19)
-- **Ko-fi:** [Buy Me Coffee](https://ko-fi.com/lineaja19)
-- **Trakteer:** [Trakteer Saya](https://trakteer.id/lineaja19)
+- **PayPal:** [Donate Here](https://paypal.me/liwirya)
+- **Ko-fi:** [Buy Me Coffee](https://ko-fi.com/liwirya)
+- **Trakteer:** [Trakteer Saya](https://trakteer.id/liwirya)
 
 ---
 

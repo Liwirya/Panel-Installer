@@ -1,21 +1,21 @@
 #!/bin/bash
 
 # =============================================================================
-# PTERODACTYL NODE & LOCATION CREATOR
-# Versi: 2.0 Enhanced - Compatible dengan Pterodactyl v1.11+
-# Dibuat oleh: Liwirya
+# PTERODACTYL PANEL AUTO INSTALLER
+# Dibuat oleh: LIWIRYA
+# Versi: 2.0
 # =============================================================================
 
+BLUE='\033[0;34m'       
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 NC='\033[0m'
 
-LOG_FILE="/var/log/pterodactyl-nodemaker.log"
+LOG_FILE="/var/log/pterodactyl-installer.log"
 
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
@@ -37,14 +37,21 @@ print_warning() {
 }
 
 print_header() {
-    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC} $1 ${BLUE}║${NC}"
-    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}[+] =============================================== [+]${NC}"
+    echo -e "${BLUE}[+] $1 [+]${NC}"
+    echo -e "${BLUE}[+] =============================================== [+]${NC}"
 }
 
 validate_domain() {
-    local domain=$1
-    if [[ $domain =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+    if [[ $1 =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{1,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{1,61}[a-zA-Z0-9])?)*$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+validate_url() {
+    if [[ $1 =~ ^https?:// ]]; then
         return 0
     else
         return 1
@@ -52,162 +59,285 @@ validate_domain() {
 }
 
 validate_number() {
-    local number=$1
-    if [[ $number =~ ^[0-9]+$ ]] && [ "$number" -gt 0 ]; then
+    if [[ $1 =~ ^[0-9]+$ ]]; then
         return 0
     else
         return 1
     fi
-}
-
-validate_port() {
-    local port=$1
-    if [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-check_database_connection() {
-    print_status "🔍 Memeriksa koneksi database..."
-    
-    cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
-        return 1
-    }
-    
-    php artisan migrate:status > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        print_status "✅ Koneksi database berhasil!"
-        return 0
-    else
-        print_error "❌ Koneksi database gagal!"
-        print_error "Pastikan database sudah dikonfigurasi dengan benar."
-        return 1
-    fi
-}
-
-check_location_exists() {
-    local location_name=$1
-    cd /var/www/pterodactyl
-    
-    if php artisan tinker --execute "echo \App\Models\Location::where('short', '$location_name')->exists() ? 'exists' : 'not_exists';" 2>/dev/null | grep -q "exists"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-list_existing_locations() {
-    print_status "📍 Lokasi yang sudah tersedia:"
-    cd /var/www/pterodactyl
-    
-    php artisan tinker --execute "
-        \$locations = \App\Models\Location::all();
-        foreach(\$locations as \$location) {
-            echo 'ID: ' . \$location->id . ' | Short: ' . \$location->short . ' | Long: ' . \$location->long . PHP_EOL;
-        }
-    " 2>/dev/null | grep -E "ID: [0-9]+" || echo "Belum ada lokasi yang dibuat."
-}
-
-get_system_info() {
-    print_header "                    INFORMASI SISTEM                    "
-    
-    echo -e "${CYAN}🖥️  Hostname:${NC} $(hostname)"
-    echo -e "${CYAN}🌐 IP Publik:${NC} $(curl -s ifconfig.me 2>/dev/null || echo "Tidak dapat dideteksi")"
-    echo -e "${CYAN}💾 RAM Total:${NC} $(free -h | awk '/^Mem:/ {print $2}')"
-    echo -e "${CYAN}💿 Disk Tersedia:${NC} $(df -h / | awk 'NR==2 {print $4}')"
-    echo -e "${CYAN}🐧 OS:${NC} $(lsb_release -d 2>/dev/null | cut -f2 || cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
-    echo ""
 }
 
 display_welcome() {
     clear
-    echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${PURPLE}║${NC}                                                                      ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}            ${WHITE}🚀 PTERODACTYL NODE & LOCATION CREATOR 🚀${NC}            ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}                         ${CYAN}© Liwirya 2025${NC}                         ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}                                                                      ${PURPLE}║${NC}"
-    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "${WHITE}Script ini akan membantu Anda membuat Node dan Lokasi baru${NC}"
-    echo -e "${WHITE}untuk Pterodactyl Panel dengan mudah dan otomatis.${NC}"
-    echo ""
-    echo -e "${CYAN}📱 Telegram: @senkaliwirya${NC}"
-    echo -e "${CYAN}💼 Support : Clorinde ID Team${NC}"
-    echo ""
+    echo -e ""
+    print_header "                AUTO INSTALLER PTERODACTYL                "
+    echo -e "${BLUE}[+]                   © LIWIRYA 2025                   [+]${NC}"
+    print_header "==============================================="
+    echo -e ""
+    echo -e "${WHITE}Script ini dibuat untuk mempermudah instalasi Pterodactyl Panel${NC}"
+    echo -e "${WHITE}Fitur lengkap: Panel, Tema, Wings, Node Management${NC}"
+    echo -e "${RED}⚠️  Dilarang keras untuk mendistribusikan script ini!${NC}"
+    echo -e ""
+    echo -e "${CYAN}📱 TELEGRAM  : @senkaliwirya${NC}"
+    echo -e "${CYAN}💼 CREDITS   : @Liwirya${NC}"
+    echo -e "${CYAN}🌐 SUPPORT   : Clorinde ID Team${NC}"
+    echo -e ""
+    sleep 4
+    clear
 }
 
-select_operation_mode() {
-    echo -e "${YELLOW}Pilih operasi yang ingin dilakukan:${NC}"
-    echo -e "${CYAN}1.${NC} 🏗️  Buat Lokasi dan Node baru"
-    echo -e "${CYAN}2.${NC} 🖥️  Buat Node saja (gunakan lokasi yang ada)"
-    echo -e "${CYAN}3.${NC} 📍 Buat Lokasi saja"
-    echo -e "${CYAN}4.${NC} 📋 Lihat lokasi yang ada"
-    echo -e "${CYAN}5.${NC} ❌ Keluar"
-    echo ""
-    
-    while true; do
-        echo -e "${YELLOW}Masukkan pilihan (1-5):${NC}"
-        read -r operation_mode
-        
-        case $operation_mode in
-            1|2|3|4|5)
-                break
-                ;;
-            *)
-                print_error "Pilihan tidak valid! Masukkan angka 1-5."
-                ;;
-        esac
-    done
-}
-
-create_location() {
-    local location_name=$1
-    local location_description=$2
-    
-    print_status "📍 Membuat lokasi: $location_name..."
-    
-    cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
-        return 1
-    }
-    
-    if php artisan p:location:make --no-interaction <<EOF
-$location_name
-$location_description
-EOF
-    then
-        print_status "✅ Lokasi '$location_name' berhasil dibuat!"
-        return 0
-    else
-        print_error "❌ Gagal membuat lokasi '$location_name'!"
-        return 1
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        print_error "Script ini harus dijalankan sebagai root!"
+        print_error "Gunakan: sudo bash $0"
+        exit 1
     fi
 }
 
-create_node() {
-    local node_name=$1
-    local location_id=$2
-    local domain=$3
-    local ram=$4
-    local disk_space=$5
-    local daemon_port=${6:-8080}
-    local daemon_sftp_port=${7:-2022}
-    local daemon_base=${8:-/var/lib/pterodactyl/volumes}
+install_dependencies() {
+    print_header "            UPDATE SISTEM & INSTALL DEPENDENCIES            "
     
-    print_status "🖥️  Membuat node: $node_name..."
+    print_status "Mengupdate package list..."
+    apt update -y >> "$LOG_FILE" 2>&1
+    
+    print_status "Menginstall dependencies yang diperlukan..."
+    apt install -y curl wget unzip zip jq software-properties-common apt-transport-https ca-certificates gnupg lsb-release >> "$LOG_FILE" 2>&1
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ Dependencies berhasil diinstall!"
+    else
+        print_error "❌ Gagal menginstall dependencies!"
+        exit 1
+    fi
+    
+    sleep 2
+    clear
+}
+
+check_token() {
+    print_header "               VERIFIKASI LISENSI TOKEN                "
+    
+    echo -e "${YELLOW}🔐 Masukkan token akses untuk melanjutkan:${NC}"
+    read -r USER_TOKEN
+
+    case "$USER_TOKEN" in
+        "liwirya"|"Liwirya2025"|"pterodactyl-pro")
+            print_status "✅ Token valid! Akses diberikan."
+            ;;
+        *)
+            print_error "❌ Token tidak valid!"
+            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "${WHITE}🛒 Untuk mendapatkan token akses:${NC}"
+            echo -e "${CYAN}📱 TELEGRAM : @Liwirya${NC}"
+            echo -e "${CYAN}📞 WHATSAPP : +6283879152564${NC}"
+            echo -e "${GREEN}💰 HARGA    : 25K (Free update selamanya!)${NC}"
+            echo -e "${YELLOW}⭐ BENEFIT  : Akses semua fitur + support 24/7${NC}"
+            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            exit 1
+            ;;
+    esac
+    
+    sleep 2
+    clear
+}
+
+install_panel() {
+    print_header "              INSTALASI PTERODACTYL PANEL               "
+    
+    echo -e "${YELLOW}📋 Informasi yang diperlukan untuk instalasi panel:${NC}"
+    
+    # Get domain
+    while true; do
+        echo -e "${CYAN}🌐 Masukkan FQDN/Domain (contoh: panel.domain.com):${NC}"
+        read -r PANEL_FQDN
+        if validate_domain "$PANEL_FQDN"; then
+            break
+        else
+            print_error "Format domain tidak valid! Coba lagi."
+        fi
+    done
+    
+    echo -e "${CYAN}📧 Masukkan email admin:${NC}"
+    read -r ADMIN_EMAIL
+    
+    echo -e "${CYAN}👤 Masukkan username admin:${NC}"
+    read -r ADMIN_USERNAME
+    
+    echo -e "${CYAN}🔒 Masukkan password admin:${NC}"
+    read -s ADMIN_PASSWORD
+    echo
+    
+    echo -e "${CYAN}🗄️  Masukkan nama database (default: pterodactyl):${NC}"
+    read -r DB_NAME
+    DB_NAME=${DB_NAME:-pterodactyl}
+    
+    echo -e "${CYAN}🔐 Masukkan password database:${NC}"
+    read -s DB_PASSWORD
+    echo
+    
+    print_status "🚀 Memulai instalasi Pterodactyl Panel..."
+    
+    bash <(curl -s https://pterodactyl-installer.se) <<EOF
+$ADMIN_EMAIL
+$ADMIN_USERNAME
+$ADMIN_USERNAME
+$ADMIN_PASSWORD
+$PANEL_FQDN
+y
+y
+$DB_NAME
+pterodactyl_user
+$DB_PASSWORD
+y
+y
+Europe/Amsterdam
+$ADMIN_EMAIL
+$ADMIN_USERNAME
+$ADMIN_USERNAME
+$ADMIN_PASSWORD
+y
+EOF
+
+    if [ $? -eq 0 ]; then
+        print_status "✅ Panel Pterodactyl berhasil diinstall!"
+        echo -e "${GREEN}🌐 URL Panel: https://$PANEL_FQDN${NC}"
+        echo -e "${GREEN}👤 Username: $ADMIN_USERNAME${NC}"
+        echo -e "${GREEN}📧 Email: $ADMIN_EMAIL${NC}"
+    else
+        print_error "❌ Gagal menginstall panel!"
+        return 1
+    fi
+    
+    sleep 3
+}
+
+install_wings() {
+    print_header "                 INSTALASI PTERODACTYL WINGS                "
+    
+    print_status "🚀 Memulai instalasi Wings..."
+    
+    print_status "🐳 Menginstall Docker..."
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh >> "$LOG_FILE" 2>&1
+    systemctl enable --now docker
+    
+    mkdir -p /etc/pterodactyl
+    curl -L -o /usr/local/bin/wings "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_$([[ "$(uname -m)" == "x86_64" ]] && echo "amd64" || echo "arm64")"
+    chmod u+x /usr/local/bin/wings
+    
+    cat > /etc/systemd/system/wings.service << 'EOF'
+[Unit]
+Description=Pterodactyl Wings Daemon
+After=docker.service
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+User=root
+WorkingDirectory=/etc/pterodactyl
+LimitNOFILE=4096
+PIDFile=/var/run/wings/daemon.pid
+ExecStart=/usr/local/bin/wings
+Restart=on-failure
+StartLimitInterval=180
+StartLimitBurst=30
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    systemctl daemon-reload
+    systemctl enable wings
+    
+    print_status "✅ Wings berhasil diinstall!"
+    print_warning "⚠️  Jangan lupa konfigurasi node di panel dan jalankan configure_wings!"
+    
+    sleep 3
+}
+
+uninstall_theme() {
+    print_header "                HAPUS TEMA PANEL                "
+    
+    echo -e "${RED}⚠️  Apakah Anda yakin ingin menghapus tema dan restore ke default? (y/n):${NC}"
+    read -r CONFIRM
+    
+    if [[ $CONFIRM != "y" && $CONFIRM != "Y" ]]; then
+        print_status "Pembatalan operasi."
+        return
+    fi
+    
+    print_status "🔄 Menjalankan script restore tema..."
+    bash <(curl -s https://raw.githubusercontent.com/VallzHost/installer-theme/main/repair.sh) >> "$LOG_FILE" 2>&1
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ Tema berhasil dihapus dan direstore ke default!"
+    else
+        print_error "❌ Gagal menghapus tema!"
+    fi
+    
+    sleep 3
+}
+
+create_node() {
+    print_header "                BUAT NODE BARU                "
+    
+    echo -e "${CYAN}📍 Masukkan nama lokasi:${NC}"
+    read -r location_name
+    
+    echo -e "${CYAN}📝 Masukkan deskripsi lokasi:${NC}"
+    read -r location_description
+    
+    echo -e "${CYAN}🌐 Masukkan domain/IP node:${NC}"
+    read -r domain
+    while ! validate_domain "$domain"; do
+        print_error "Format domain/IP tidak valid!"
+        echo -e "${CYAN}🌐 Masukkan domain/IP node:${NC}"
+        read -r domain
+    done
+    
+    echo -e "${CYAN}🏷️  Masukkan nama node:${NC}"
+    read -r node_name
+    
+    echo -e "${CYAN}💾 Masukkan RAM (MB):${NC}"
+    read -r ram
+    while ! validate_number "$ram"; do
+        print_error "RAM harus berupa angka!"
+        echo -e "${CYAN}💾 Masukkan RAM (MB):${NC}"
+        read -r ram
+    done
+    
+    echo -e "${CYAN}💿 Masukkan disk space (MB):${NC}"
+    read -r disk_space
+    while ! validate_number "$disk_space"; do
+        print_error "Disk space harus berupa angka!"
+        echo -e "${CYAN}💿 Masukkan disk space (MB):${NC}"
+        read -r disk_space
+    done
+    
+    echo -e "${CYAN}🆔 Masukkan Location ID:${NC}"
+    read -r locid
+    while ! validate_number "$locid"; do
+        print_error "Location ID harus berupa angka!"
+        echo -e "${CYAN}🆔 Masukkan Location ID:${NC}"
+        read -r locid
+    done
     
     cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
+        print_error "Direktori pterodactyl tidak ditemukan!"
         return 1
     }
     
-    if php artisan p:node:make --no-interaction <<EOF
+    print_status "📍 Membuat lokasi baru..."
+    php artisan p:location:make <<EOF
+$location_name
+$location_description
+EOF
+    
+    print_status "🖥️  Membuat node baru..."
+    php artisan p:node:make <<EOF
 $node_name
-Node $node_name - Auto created
-$location_id
+$location_description
+$locid
 https
 $domain
 yes
@@ -218,400 +348,523 @@ $ram
 $disk_space
 $disk_space
 100
-$daemon_port
-$daemon_sftp_port
-$daemon_base
+8080
+2022
+/var/lib/pterodactyl/volumes
 EOF
-    then
-        print_status "✅ Node '$node_name' berhasil dibuat!"
-        return 0
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ Node dan lokasi berhasil dibuat!"
+        echo -e "${GREEN}📍 Lokasi: $location_name${NC}"
+        echo -e "${GREEN}🖥️  Node: $node_name${NC}"
+        echo -e "${GREEN}🌐 Domain: $domain${NC}"
     else
-        print_error "❌ Gagal membuat node '$node_name'!"
-        return 1
-    fi
-}
-
-input_location_data() {
-    while true; do
-        echo -e "${CYAN}📍 Masukkan nama singkat lokasi (contoh: jakarta, singapore):${NC}"
-        read -r location_name
-        
-        if [ -z "$location_name" ]; then
-            print_error "Nama lokasi tidak boleh kosong!"
-            continue
-        fi
-        
-        if [[ ! $location_name =~ ^[a-zA-Z0-9_-]+$ ]]; then
-            print_error "Nama lokasi hanya boleh mengandung huruf, angka, underscore, dan dash!"
-            continue
-        fi
-        
-        if check_location_exists "$location_name"; then
-            print_error "Lokasi '$location_name' sudah ada!"
-            continue
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}📝 Masukkan deskripsi lokasi:${NC}"
-        read -r location_description
-        
-        if [ -z "$location_description" ]; then
-            print_error "Deskripsi lokasi tidak boleh kosong!"
-            continue
-        fi
-        
-        break
-    done
-}
-
-input_node_data() {
-    while true; do
-        echo -e "${CYAN}🖥️  Masukkan nama node:${NC}"
-        read -r node_name
-        
-        if [ -z "$node_name" ]; then
-            print_error "Nama node tidak boleh kosong!"
-            continue
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}🌐 Masukkan domain atau IP node (contoh: node1.domain.com):${NC}"
-        read -r domain
-        
-        if [ -z "$domain" ]; then
-            print_error "Domain/IP tidak boleh kosong!"
-            continue
-        fi
-        
-        if ! validate_domain "$domain"; then
-            if [[ ! $domain =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-                print_error "Format domain/IP tidak valid!"
-                continue
-            fi
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}💾 Masukkan total RAM dalam MB (contoh: 4096):${NC}"
-        read -r ram
-        
-        if ! validate_number "$ram"; then
-            print_error "RAM harus berupa angka positif!"
-            continue
-        fi
-        
-        if [ "$ram" -lt 512 ]; then
-            print_warning "RAM terlalu kecil! Minimal 512MB."
-            continue
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}💿 Masukkan total disk space dalam MB (contoh: 20480):${NC}"
-        read -r disk_space
-        
-        if ! validate_number "$disk_space"; then
-            print_error "Disk space harus berupa angka positif!"
-            continue
-        fi
-        
-        if [ "$disk_space" -lt 1024 ]; then
-            print_warning "Disk space terlalu kecil! Minimal 1024MB."
-            continue
-        fi
-        
-        break
-    done
-    
-    echo -e "${YELLOW}🔧 Konfigurasi lanjutan (tekan Enter untuk default):${NC}"
-    
-    while true; do
-        echo -e "${CYAN}🔌 Port daemon (default: 8080):${NC}"
-        read -r daemon_port
-        
-        if [ -z "$daemon_port" ]; then
-            daemon_port=8080
-            break
-        fi
-        
-        if ! validate_port "$daemon_port"; then
-            print_error "Port tidak valid! Gunakan port 1-65535."
-            continue
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}📁 Port SFTP (default: 2022):${NC}"
-        read -r daemon_sftp_port
-        
-        if [ -z "$daemon_sftp_port" ]; then
-            daemon_sftp_port=2022
-            break
-        fi
-        
-        if ! validate_port "$daemon_sftp_port"; then
-            print_error "Port tidak valid! Gunakan port 1-65535."
-            continue
-        fi
-        
-        break
-    done
-    
-    echo -e "${CYAN}📂 Direktori base daemon (default: /var/lib/pterodactyl/volumes):${NC}"
-    read -r daemon_base
-    
-    if [ -z "$daemon_base" ]; then
-        daemon_base="/var/lib/pterodactyl/volumes"
-    fi
-}
-
-select_existing_location() {
-    print_status "📍 Mengambil daftar lokasi yang tersedia..."
-    
-    cd /var/www/pterodactyl
-    
-    temp_file=$(mktemp)
-    php artisan tinker --execute "
-        \$locations = \App\Models\Location::all();
-        foreach(\$locations as \$location) {
-            echo \$location->id . '|' . \$location->short . '|' . \$location->long . PHP_EOL;
-        }
-    " 2>/dev/null > "$temp_file"
-    
-    if [ ! -s "$temp_file" ]; then
-        print_error "Tidak ada lokasi yang tersedia!"
-        print_status "Silakan buat lokasi terlebih dahulu."
-        rm -f "$temp_file"
-        return 1
+        print_error "❌ Gagal membuat node!"
     fi
     
-    echo -e "${YELLOW}📍 Lokasi yang tersedia:${NC}"
-    echo ""
-    
-    local counter=1
-    declare -A location_map
-    
-    while IFS='|' read -r id short long; do
-        if [ -n "$id" ] && [ -n "$short" ] && [ -n "$long" ]; then
-            echo -e "${CYAN}$counter.${NC} ID: $id | $short - $long"
-            location_map[$counter]=$id
-            ((counter++))
-        fi
-    done < "$temp_file"
-    
-    echo ""
-    
-    while true; do
-        echo -e "${YELLOW}Pilih nomor lokasi:${NC}"
-        read -r location_choice
-        
-        if [[ -n ${location_map[$location_choice]} ]]; then
-            selected_location_id=${location_map[$location_choice]}
-            break
-        else
-            print_error "Pilihan tidak valid!"
-        fi
-    done
-    
-    rm -f "$temp_file"
+    sleep 3
 }
 
-confirm_data() {
-    echo ""
-    print_header "                    KONFIRMASI DATA                    "
+configure_wings() {
+    print_header "                KONFIGURASI WINGS                "
     
-    case $operation_mode in
-        1)
-            echo -e "${CYAN}📍 Lokasi:${NC}"
-            echo -e "   Nama: $location_name"
-            echo -e "   Deskripsi: $location_description"
-            echo ""
-            echo -e "${CYAN}🖥️  Node:${NC}"
-            echo -e "   Nama: $node_name"
-            echo -e "   Domain: $domain"
-            echo -e "   RAM: ${ram}MB"
-            echo -e "   Disk: ${disk_space}MB"
-            echo -e "   Port Daemon: $daemon_port"
-            echo -e "   Port SFTP: $daemon_sftp_port"
-            echo -e "   Base Directory: $daemon_base"
-            ;;
-        2)
-            echo -e "${CYAN}🖥️  Node:${NC}"
-            echo -e "   Nama: $node_name"
-            echo -e "   Domain: $domain"
-            echo -e "   RAM: ${ram}MB"
-            echo -e "   Disk: ${disk_space}MB"
-            echo -e "   Port Daemon: $daemon_port"
-            echo -e "   Port SFTP: $daemon_sftp_port"
-            echo -e "   Base Directory: $daemon_base"
-            echo -e "   Location ID: $selected_location_id"
-            ;;
-        3)
-            echo -e "${CYAN}📍 Lokasi:${NC}"
-            echo -e "   Nama: $location_name"
-            echo -e "   Deskripsi: $location_description"
-            ;;
-    esac
+    echo -e "${YELLOW}ℹ️  Salin konfigurasi dari panel admin -> Nodes -> Configuration${NC}"
+    echo -e "${CYAN}📋 Paste konfigurasi Wings:${NC}"
+    read -r wings_config
     
-    echo ""
-    echo -e "${YELLOW}❓ Apakah data sudah benar? (y/n):${NC}"
-    read -r confirm
+    print_status "⚙️  Mengkonfigurasi Wings..."
     
-    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+    eval "$wings_config"
+
+    systemctl enable wings
+    systemctl start wings
+    
+    if systemctl is-active --quiet wings; then
+        print_status "✅ Wings berhasil dikonfigurasi dan dijalankan!"
+        print_status "🔄 Status: $(systemctl is-active wings)"
+    else
+        print_error "❌ Gagal menjalankan Wings!"
+        print_error "📋 Check log: journalctl -u wings -f"
+    fi
+    
+    sleep 3
+}
+
+uninstall_panel() {
+    print_header "               UNINSTALL PANEL                "
+    
+    echo -e "${RED}⚠️  PERINGATAN: Ini akan menghapus SEMUA data panel!${NC}"
+    echo -e "${RED}💾 Pastikan Anda sudah backup data penting!${NC}"
+    echo -e "${RED}❓ Apakah Anda yakin? (yes/no):${NC}"
+    read -r CONFIRM
+    
+    if [[ $CONFIRM != "yes" ]]; then
         print_status "Operasi dibatalkan."
+        return
+    fi
+    
+    print_status "🗑️  Menjalankan uninstaller..."
+    bash <(curl -s https://pterodactyl-installer.se) <<EOF
+y
+y
+y
+y
+EOF
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ Panel berhasil di-uninstall!"
+    else
+        print_error "❌ Gagal meng-uninstall panel!"
+    fi
+    
+    sleep 3
+}
+
+create_admin_user() {
+    print_header "               BUAT USER ADMIN BARU                "
+    
+    echo -e "${CYAN}👤 Masukkan username admin:${NC}"
+    read -r admin_user
+    
+    echo -e "${CYAN}📧 Masukkan email admin:${NC}"
+    read -r admin_email
+    
+    echo -e "${CYAN}🔒 Masukkan password admin:${NC}"
+    read -s admin_password
+    echo
+    
+    cd /var/www/pterodactyl || {
+        print_error "Direktori pterodactyl tidak ditemukan!"
+        return 1
+    }
+    
+    print_status "👤 Membuat user admin baru..."
+    php artisan p:user:make <<EOF
+yes
+$admin_email
+$admin_user
+$admin_user
+$admin_user
+$admin_password
+EOF
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ User admin berhasil dibuat!"
+        echo -e "${GREEN}👤 Username: $admin_user${NC}"
+        echo -e "${GREEN}📧 Email: $admin_email${NC}"
+    else
+        print_error "❌ Gagal membuat user admin!"
+    fi
+    
+    sleep 3
+}
+
+change_vps_password() {
+    print_header "               UBAH PASSWORD VPS                "
+    
+    echo -e "${CYAN}🔒 Masukkan password baru:${NC}"
+    read -s new_password
+    echo
+    
+    echo -e "${CYAN}🔒 Konfirmasi password baru:${NC}"
+    read -s confirm_password
+    echo
+    
+    if [ "$new_password" != "$confirm_password" ]; then
+        print_error "Password tidak cocok!"
         return 1
     fi
     
-    return 0
+    print_status "🔑 Mengubah password VPS..."
+    echo "root:$new_password" | chpasswd
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ Password VPS berhasil diubah!"
+        print_warning "⚠️  Jangan lupa catat password baru!"
+    else
+        print_error "❌ Gagal mengubah password VPS!"
+    fi
+    
+    sleep 3
 }
 
-display_results() {
-    echo ""
-    print_header "                    HASIL OPERASI                    "
+show_system_info() {
+    print_header "              INFORMASI SISTEM              "
     
-    case $operation_mode in
-        1)
-            if [ $location_created -eq 0 ] && [ $node_created -eq 0 ]; then
-                print_status "✅ Lokasi dan Node berhasil dibuat!"
-                echo ""
-                echo -e "${GREEN}📋 Informasi lengkap:${NC}"
-                echo -e "${CYAN}📍 Lokasi: $location_name - $location_description${NC}"
-                echo -e "${CYAN}🖥️  Node: $node_name${NC}"
-                echo -e "${CYAN}🌐 Domain: $domain${NC}"
-                echo -e "${CYAN}💾 RAM: ${ram}MB${NC}"
-                echo -e "${CYAN}💿 Disk: ${disk_space}MB${NC}"
-                
-                print_status "🔧 Langkah selanjutnya:"
-                echo -e "${YELLOW}1. Login ke panel admin${NC}"
-                echo -e "${YELLOW}2. Pergi ke Admin -> Nodes${NC}"
-                echo -e "${YELLOW}3. Klik node '$node_name'${NC}"
-                echo -e "${YELLOW}4. Copy konfigurasi dan jalankan di server node${NC}"
-                echo -e "${YELLOW}5. Install Wings di server node${NC}"
+    echo -e "${CYAN}🖥️  Hostname:${NC} $(hostname)"
+    echo -e "${CYAN}💻 OS:${NC} $(lsb_release -d | cut -f2)"
+    echo -e "${CYAN}🔧 Kernel:${NC} $(uname -r)"
+    echo -e "${CYAN}💾 RAM:${NC} $(free -h | awk '/^Mem:/ {print $2}')"
+    echo -e "${CYAN}💿 Disk:${NC} $(df -h / | awk 'NR==2 {print $2}')"
+    echo -e "${CYAN}🌐 IP Public:${NC} $(curl -s ifconfig.me)"
+    echo -e "${CYAN}⏰ Uptime:${NC} $(uptime -p)"
+    
+    if systemctl is-active --quiet pterodactyl; then
+        echo -e "${GREEN}✅ Panel Status: Active${NC}"
+    else
+        echo -e "${RED}❌ Panel Status: Inactive${NC}"
+    fi
+    
+    if systemctl is-active --quiet wings; then
+        echo -e "${GREEN}✅ Wings Status: Active${NC}"
+    else
+        echo -e "${RED}❌ Wings Status: Inactive${NC}"
+    fi
+    
+    echo
+    echo -e "${YELLOW}Tekan Enter untuk kembali...${NC}"
+    read
+}
+
+backup_panel() {
+    print_header "                BACKUP PANEL                "
+    
+    BACKUP_DIR="/root/pterodactyl-backups"
+    BACKUP_NAME="pterodactyl-backup-$(date +%Y%m%d_%H%M%S)"
+    
+    mkdir -p "$BACKUP_DIR"
+    
+    print_status "💾 Membuat backup panel..."
+    
+    tar -czf "$BACKUP_DIR/$BACKUP_NAME-files.tar.gz" -C /var/www pterodactyl
+    
+    mysqldump -u root pterodactyl > "$BACKUP_DIR/$BACKUP_NAME-database.sql"
+    
+    print_status "✅ Backup selesai!"
+    echo -e "${GREEN}📁 Lokasi: $BACKUP_DIR/$BACKUP_NAME-*${NC}"
+    
+    sleep 3
+}
+
+display_menu() {
+    clear
+    echo -e "                                                                     "
+    echo -e "${RED}        _,gggggggggg.                                     ${NC}"
+    echo -e "${RED}    ,ggggggggggggggggg.                                   ${NC}"
+    echo -e "${RED}  ,ggggg        gggggggg.                                 ${NC}"
+    echo -e "${RED} ,ggg'               'ggg.                                ${NC}"
+    echo -e "${RED}',gg       ,ggg.      'ggg:                               ${NC}"
+    echo -e "${RED}'ggg      ,gg'''  .    ggg       Auto Installer Liwirya 2025   ${NC}"
+    echo -e "${RED}gggg      gg     ,     ggg      ────────────────────────────  ${NC}"
+    echo -e "${RED}ggg:     gg.     -   ,ggg       • Telegram : @senkaliwirya      ${NC}"
+    echo -e "${RED} ggg:     ggg._    _,ggg        • Credits  : @Liwirya  ${NC}"
+    echo -e "${RED} ggg.    '.'''ggggggp           • Support  : Clorinde ID Team  ${NC}"
+    echo -e "${RED}  'ggg    '-.__                 • Version  : 2.0     ${NC}"
+    echo -e "${RED}    ggg                                                   ${NC}"
+    echo -e "${RED}      ggg                                                 ${NC}"
+    echo -e "${RED}        ggg.                                              ${NC}"
+    echo -e "${RED}          ggg.                                            ${NC}"
+    echo -e "${RED}             b.                                           ${NC}"
+    echo -e "                                                                     "
+    
+    print_header "                MENU UTAMA INSTALLER                "
+    echo
+    echo -e "${BLUE}📦 INSTALASI & SETUP:${NC}"
+    echo -e "  ${CYAN}1.${NC}  🚀 Install Pterodactyl Panel"
+    echo -e "  ${CYAN}2.${NC}  🖥️  Install Wings (Node)"
+    echo -e "  ${CYAN}3.${NC}  ⚙️  Konfigurasi Wings"
+    echo
+    echo -e "${GREEN}🔧 MANAGEMENT:${NC}"
+    echo -e "  ${CYAN}4.${NC}  🏗️  Buat Node & Lokasi"
+    echo -e "  ${CYAN}5.${NC}  👤 Buat User Admin"
+    echo -e "  ${CYAN}6.${NC}  💾 Backup Panel"
+    echo -e "  ${CYAN}7.${NC}  📊 Info Sistem"
+    echo
+    echo -e "${YELLOW}🛠️  MAINTENANCE:${NC}"
+    echo -e "  ${CYAN}8.${NC}  🗑️  Uninstall Tema"
+    echo -e "  ${CYAN}9.${NC} 🗑️  Uninstall Panel"
+    echo -e "  ${CYAN}10.${NC} 🔑 Ubah Password VPS"
+    echo
+    echo -e "${PURPLE}🎯 TOOLS TAMBAHAN:${NC}"
+    echo -e "  ${CYAN}11.${NC} 🔄 Restart Semua Service"
+    echo -e "  ${CYAN}12.${NC} 🧹 Bersihkan Cache"
+    echo -e "  ${CYAN}13.${NC} 📝 View Logs"
+    echo -e "  ${CYAN}14.${NC} 🌟 Update Script"
+    echo
+    echo -e "  ${RED}x.${NC}  🚪 Keluar"
+    echo
+    echo -e "${YELLOW}Masukkan pilihan (1-15/x):${NC} "
+}
+
+restart_services() {
+    print_header "              RESTART SEMUA SERVICE              "
+    
+    services=("nginx" "apache2" "mysql" "mariadb" "redis-server" "pterodactyl" "wings" "docker")
+    
+    for service in "${services[@]}"; do
+        if systemctl list-unit-files | grep -q "^$service.service"; then
+            print_status "🔄 Restarting $service..."
+            systemctl restart "$service" >> "$LOG_FILE" 2>&1
+            if systemctl is-active --quiet "$service"; then
+                echo -e "   ${GREEN}✅ $service: Active${NC}"
             else
-                print_error "❌ Ada kesalahan dalam proses pembuatan!"
+                echo -e "   ${RED}❌ $service: Failed${NC}"
+            fi
+        fi
+    done
+    
+    sleep 3
+}
+
+clear_cache() {
+    print_header "                BERSIHKAN CACHE                "
+    
+    print_status "🧹 Membersihkan cache sistem..."
+    
+    sync && echo 3 > /proc/sys/vm/drop_caches
+    
+    if [ -d "/var/www/pterodactyl" ]; then
+        cd /var/www/pterodactyl
+        print_status "🧹 Membersihkan cache Pterodactyl..."
+        php artisan cache:clear >> "$LOG_FILE" 2>&1
+        php artisan config:clear >> "$LOG_FILE" 2>&1
+        php artisan view:clear >> "$LOG_FILE" 2>&1
+        php artisan route:clear >> "$LOG_FILE" 2>&1
+    fi
+    
+    apt autoclean && apt autoremove -y >> "$LOG_FILE" 2>&1
+    
+    print_status "✅ Cache berhasil dibersihkan!"
+    sleep 3
+}
+
+view_logs() {
+    print_header "                 VIEW LOGS                 "
+    
+    echo -e "${CYAN}Pilih log yang ingin dilihat:${NC}"
+    echo -e "1. 📋 Log Script Installer"
+    echo -e "2. 🖥️  Log Wings"
+    echo -e "3. 🌐 Log Nginx/Apache"
+    echo -e "4. 🗄️  Log MySQL/MariaDB"
+    echo -e "5. 🐳 Log Docker"
+    echo -e "x. 🔙 Kembali"
+    
+    read -r LOG_CHOICE
+    
+    case "$LOG_CHOICE" in
+        1)
+            if [ -f "$LOG_FILE" ]; then
+                tail -50 "$LOG_FILE"
+            else
+                print_error "Log file tidak ditemukan!"
             fi
             ;;
         2)
-            if [ $node_created -eq 0 ]; then
-                print_status "✅ Node berhasil dibuat!"
-                echo ""
-                echo -e "${GREEN}📋 Informasi Node:${NC}"
-                echo -e "${CYAN}🖥️  Node: $node_name${NC}"
-                echo -e "${CYAN}🌐 Domain: $domain${NC}"
-                echo -e "${CYAN}💾 RAM: ${ram}MB${NC}"
-                echo -e "${CYAN}💿 Disk: ${disk_space}MB${NC}"
-            else
-                print_error "❌ Gagal membuat node!"
-            fi
+            journalctl -u wings -n 50 --no-pager
             ;;
         3)
-            if [ $location_created -eq 0 ]; then
-                print_status "✅ Lokasi berhasil dibuat!"
-                echo ""
-                echo -e "${GREEN}📋 Informasi Lokasi:${NC}"
-                echo -e "${CYAN}📍 Nama: $location_name${NC}"
-                echo -e "${CYAN}📝 Deskripsi: $location_description${NC}"
+            if [ -f "/var/log/nginx/error.log" ]; then
+                tail -50 /var/log/nginx/error.log
+            elif [ -f "/var/log/apache2/error.log" ]; then
+                tail -50 /var/log/apache2/error.log
             else
-                print_error "❌ Gagal membuat lokasi!"
+                print_error "Log web server tidak ditemukan!"
             fi
+            ;;
+        4)
+            if [ -f "/var/log/mysql/error.log" ]; then
+                tail -50 /var/log/mysql/error.log
+            elif [ -f "/var/log/mariadb/mariadb.log" ]; then
+                tail -50 /var/log/mariadb/mariadb.log
+            else
+                print_error "Log database tidak ditemukan!"
+            fi
+            ;;
+        5)
+            journalctl -u docker -n 50 --no-pager
+            ;;
+        x)
+            return
+            ;;
+        *)
+            print_error "Pilihan tidak valid!"
             ;;
     esac
     
-    echo ""
+    echo
+    echo -e "${YELLOW}Tekan Enter untuk kembali...${NC}"
+    read
+}
+
+update_script() {
+    print_header "                UPDATE SCRIPT                "
+    
+    print_status "🔄 Memeriksa update terbaru..."
+    
+    SCRIPT_URL="https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh"
+    TEMP_SCRIPT="/tmp/install_new.sh"
+    
+    wget -q "$SCRIPT_URL" -O "$TEMP_SCRIPT"
+    
+    if [ $? -eq 0 ]; then
+        if ! cmp -s "$0" "$TEMP_SCRIPT"; then
+            print_status "📥 Update tersedia! Menginstall..."
+            cp "$TEMP_SCRIPT" "$0"
+            chmod +x "$0"
+            print_status "✅ Script berhasil diupdate!"
+            echo -e "${YELLOW}🔄 Restart script untuk menggunakan versi terbaru.${NC}"
+        else
+            print_status "✅ Script sudah versi terbaru!"
+        fi
+    else
+        print_error "❌ Gagal memeriksa update!"
+    fi
+    
+    rm -f "$TEMP_SCRIPT"
+    sleep 3
+}
+
+optimize_system() {
+    print_header "             OPTIMASI SISTEM             "
+    
+    print_status "⚡ Mengoptimasi kinerja sistem..."
+    
+    if command -v mysql >/dev/null 2>&1; then
+        cat >> /etc/mysql/mysql.conf.d/pterodactyl.cnf << 'EOF'
+[mysqld]
+innodb_buffer_pool_size = 256M
+innodb_log_file_size = 64M
+max_connections = 200
+query_cache_size = 32M
+query_cache_limit = 2M
+EOF
+        systemctl restart mysql
+    fi
+    
+    if [ -f "/etc/php/8.1/fpm/php.ini" ]; then
+        sed -i 's/memory_limit = .*/memory_limit = 512M/' /etc/php/8.1/fpm/php.ini
+        sed -i 's/upload_max_filesize = .*/upload_max_filesize = 100M/' /etc/php/8.1/fpm/php.ini
+        sed -i 's/post_max_size = .*/post_max_size = 100M/' /etc/php/8.1/fpm/php.ini
+        systemctl restart php8.1-fpm
+    fi
+    
+    cat >> /etc/sysctl.conf << 'EOF'
+# Pterodactyl optimizations
+vm.swappiness = 10
+net.core.rmem_max = 134217728
+net.core.wmem_max = 134217728
+net.ipv4.tcp_rmem = 4096 65536 134217728
+net.ipv4.tcp_wmem = 4096 65536 134217728
+EOF
+    
+    sysctl -p >> "$LOG_FILE" 2>&1
+    
+    print_status "✅ Sistem berhasil dioptimasi!"
+    sleep 3
+}
+
+security_hardening() {
+    print_header "             KEAMANAN SISTEM             "
+    
+    print_status "🔒 Menerapkan pengaturan keamanan..."
+    
+    apt install -y fail2ban >> "$LOG_FILE" 2>&1
+    
+    cat > /etc/fail2ban/jail.local << 'EOF'
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 3600
+findtime = 600
+EOF
+    
+    systemctl enable fail2ban
+    systemctl start fail2ban
+    
+    if command -v ufw >/dev/null 2>&1; then
+        ufw --force enable
+        ufw default deny incoming
+        ufw default allow outgoing
+        ufw allow ssh
+        ufw allow 80/tcp
+        ufw allow 443/tcp
+        ufw allow 8080/tcp
+        ufw allow 2022/tcp
+    fi
+    
+    print_status "✅ Pengaturan keamanan diterapkan!"
+    sleep 3
 }
 
 main() {
     touch "$LOG_FILE"
-    log_message "Node creator script started"
+    log_message "Script started"
     
-    if [[ $EUID -ne 0 ]]; then
-        print_error "Script ini harus dijalankan sebagai root!"
-        exit 1
-    fi
+    check_root
     
     display_welcome
-    get_system_info
+    install_dependencies
+    check_token
     
-    if ! check_database_connection; then
-        exit 1
-    fi
-    
-    select_operation_mode
-    
-    case $operation_mode in
-        1)
-            print_header "              BUAT LOKASI DAN NODE BARU              "
-            input_location_data
-            input_node_data
-            
-            if confirm_data; then
-                create_location "$location_name" "$location_description"
-                location_created=$?
-                
-                if [ $location_created -eq 0 ]; then
-                    cd /var/www/pterodactyl
-                    location_id=$(php artisan tinker --execute "echo \App\Models\Location::where('short', '$location_name')->first()->id;" 2>/dev/null | tail -1)
-                    
-                    create_node "$node_name" "$location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$daemon_sftp_port" "$daemon_base"
-                    node_created=$?
-                else
-                    node_created=1
-                fi
-                
-                display_results
-            fi
-            ;;
-        2)
-            print_header "                BUAT NODE BARU                "
-            
-            if ! select_existing_location; then
-                exit 1
-            fi
-            
-            input_node_data
-            
-            if confirm_data; then
-                create_node "$node_name" "$selected_location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$daemon_sftp_port" "$daemon_base"
-                node_created=$?
-                
-                display_results
-            fi
-            ;;
-        3)
-            print_header "               BUAT LOKASI BARU               "
-            input_location_data
-            
-            if confirm_data; then
-                create_location "$location_name" "$location_description"
-                location_created=$?
-                
-                display_results
-            fi
-            ;;
-        4)
-            print_header "               LOKASI YANG TERSEDIA               "
-            list_existing_locations
-            ;;
-        5)
-            # Exit
-            print_status "👋 Terima kasih telah menggunakan Liwirya Node Creator!"
-            exit 0
-            ;;
-    esac
-    
-    log_message "Node creator script completed"
+    while true; do
+        display_menu
+        read -r MENU_CHOICE
+        clear
+        
+        case "$MENU_CHOICE" in
+            1)
+                install_panel
+                ;;
+            2)
+                install_wings
+                ;;           
+            3)
+                configure_wings
+                ;;
+            4)
+                create_node
+                ;;
+            5)
+                create_admin_user
+                ;;
+            6)
+                backup_panel
+                ;;
+            7)
+                show_system_info
+                ;;
+            8)
+                uninstall_theme
+                ;;
+            9)
+                uninstall_panel
+                ;;
+            10)
+                change_vps_password
+                ;;
+            11)
+                restart_services
+                ;;
+            12)
+                clear_cache
+                ;;
+            13)
+                view_logs
+                ;;
+            14)
+                update_script
+                ;;
+            15)
+                optimize_system
+                ;;
+            16)
+                security_hardening
+                ;;
+            x)
+                print_status "👋 Terima kasih telah menggunakan Liwirya Installer!"
+                print_status "📱 Support: @senkaliwirya"
+                log_message "Script ended"
+                exit 0
+                ;;
+            *)
+                print_error "Pilihan tidak valid! Silakan pilih 1-15 atau x."
+                sleep 2
+                ;;
+        esac
+    done
 }
 
 main "$@"

@@ -1,6 +1,9 @@
 # 🚀 Pterodactyl Theme Auto Installer
 
 <div align="center">
+
+![Pterodactyl Logo](https://cdn.pterodactyl.io/logos/Banner%20Logo%20Black@2x.png)
+
   <img src="https://img.shields.io/badge/Pterodactyl-Panel-blue?style=for-the-badge&logo=pterodactyl" alt="Pterodactyl Panel">
   <img src="https://img.shields.io/badge/Version-2.0-brightgreen?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Language-Bahasa%20Indonesia-red?style=for-the-badge" alt="Language">
@@ -13,7 +16,7 @@ Tool otomatis untuk menginstall berbagai tema Pterodactyl Panel dengan mudah dan
 ## ⚡ Instalasi Cepat
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh)
 ```
 
 > **Catatan:** Pastikan menjalankan command di atas sebagai user root atau menggunakan `sudo`
@@ -82,7 +85,7 @@ sudo apt update && sudo apt upgrade -y
 ### 2. Jalankan Installer
 ```bash
 # Download dan jalankan script
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh)
 ```
 
 ### 3. Ikuti Menu Interaktif
@@ -120,7 +123,7 @@ sudo systemctl restart nginx  # atau apache2
 cd /var/www/pterodactyl && php artisan cache:clear
 
 # Repair panel jika bermasalah
-bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/repair.sh)
+bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/repair.sh)
 ```
 
 ## 📸 Preview Tema
@@ -144,9 +147,8 @@ bash <(curl -s https://raw.githubusercontent.com/LineAja19/Panel-Installer/main/
 
 ### 🆘 Butuh Bantuan?
 - 💬 **Discord:** [Join Server](https://discord.gg/your-server)
-- 📧 **Email:** support@lineaja19.com
-- 🐛 **Bug Report:** [GitHub Issues](https://github.com/LineAja19/Panel-Installer/issues)
-- 📚 **Dokumentasi:** [Wiki Page](https://github.com/LineAja19/Panel-Installer/wiki)
+- 📧 **Email:** wiraliwirya@gmail.com
+- 🐛 **Bug Report:** [GitHub Issues](https://github.com/Liwirya/Panel-Installer/issues)
 
 ### 🤝 Kontribusi
 Kami menerima kontribusi dari komunitas! Silakan:
@@ -157,14 +159,13 @@ Kami menerima kontribusi dari komunitas! Silakan:
 ## 📄 Lisensi & Credits
 
 ### 👨‍💻 Developer
-- **Recode & Maintain by:** [Line](https://github.com/LineAja19) ⭐
-- **Original Creator:** [FOXSTORE](https://github.com/Foxstoree) 🦊
-- **Community Contributors:** [View All](https://github.com/LineAja19/Panel-Installer/contributors)
+- **Creator:** [Line](https://github.com/Liwirya) ⭐
+- **Community Contributors:** [Lihat semua](https://github.com/Liwirya/Panel-Installer/contributors)
 
 ### 📜 Lisensi
 ```
 MIT License - Open Source Project
-Copyright (c) 2024 LineAja19
+Copyright (c) 2025 Liwirya
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -189,8 +190,7 @@ Jika project ini membantu Anda, berikan ⭐ di GitHub dan share ke teman-teman!
 ---
 
 <div align="center">
-  <strong>🚀 Made with ❤️ by Indonesian Developers 🇮🇩</strong><br>
-  <em>For the Pterodactyl Community Worldwide 🌍</em>
+  <strong>🚀 Made by Liwirya</strong><br>
 </div>
 
 ---
@@ -198,8 +198,8 @@ Jika project ini membantu Anda, berikan ⭐ di GitHub dan share ke teman-teman!
 ## 📈 Statistics
 
 <div align="center">
-  <img src="https://img.shields.io/github/downloads/LineAja19/Panel-Installer/total?style=for-the-badge&color=blue" alt="Total Downloads">
-  <img src="https://img.shields.io/github/stars/LineAja19/Panel-Installer?style=for-the-badge&color=yellow" alt="GitHub Stars">
-  <img src="https://img.shields.io/github/forks/LineAja19/Panel-Installer?style=for-the-badge&color=green" alt="GitHub Forks">
-  <img src="https://img.shields.io/github/issues/LineAja19/Panel-Installer?style=for-the-badge&color=red" alt="GitHub Issues">
+  <img src="https://img.shields.io/github/downloads/Liwirya/Panel-Installer/total?style=for-the-badge&color=blue" alt="Total Downloads">
+  <img src="https://img.shields.io/github/stars/Liwirya/Panel-Installer?style=for-the-badge&color=yellow" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/forks/Liwirya/Panel-Installer?style=for-the-badge&color=green" alt="GitHub Forks">
+  <img src="https://img.shields.io/github/issues/Liwirya/Panel-Installer?style=for-the-badge&color=red" alt="GitHub Issues">
 </div>

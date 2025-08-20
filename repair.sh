@@ -1,242 +1,499 @@
 #!/bin/bash
 
+# =============================================================================
+# PTERODACTYL PANEL REPAIR & THEME UNINSTALLER
+# Versi: 2.0
+# Dibuat oleh: Liwirya
+# =============================================================================
+
+set -e  # Exit on any error
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+GRAY='\033[0;37m'
+NC='\033[0m'
 
-SUCCESS="✅"
-ERROR="❌"
-WARNING="⚠️"
-INFO="ℹ️"
-GEAR="⚙️"
-ROCKET="🚀"
+SPINNER="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+LOG_FILE="/var/log/pterodactyl-repair.log"
+BACKUP_DIR="/root/pterodactyl-backups"
+
+PANEL_DIR="/var/www/pterodactyl"
+PTERODACTYL_VERSION=""
+PHP_VERSION=""
+WEB_SERVER=""
+
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
 
 print_status() {
-    echo -e "${2}${1}${NC}"
+    echo -e "${GREEN}[✓]${NC} $1"
+    log_message "INFO: $1"
+}
+
+print_error() {
+    echo -e "${RED}[✗]${NC} $1"
+    log_message "ERROR: $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[!]${NC} $1"
+    log_message "WARNING: $1"
+}
+
+print_info() {
+    echo -e "${BLUE}[i]${NC} $1"
+    log_message "INFO: $1"
 }
 
 print_header() {
+    local message="$1"
+    local length=${#message}
+    local padding=$(((60 - length) / 2))
+    
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+    printf "${BLUE}║${NC}"
+    printf "%*s" $padding ""
+    printf "${WHITE}%s${NC}" "$message"
+    printf "%*s" $((60 - length - padding)) ""
+    printf "${BLUE}║${NC}\n"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+}
+
+show_spinner() {
+    local pid=$1
+    local message="$2"
+    local delay=0.1
+    local spinstr=$SPINNER
+    
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+        local temp=${spinstr#?}
+        printf " [${CYAN}%c${NC}] %s\r" "$spinstr" "$message"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+    done
+    printf "    \r"
+}
+
+show_progress() {
+    local current=$1
+    local total=$2
+    local message="$3"
+    local percentage=$((current * 100 / total))
+    local bar_length=40
+    local filled_length=$((percentage * bar_length / 100))
+    
+    printf "\r${CYAN}["
+    for ((i=0; i<filled_length; i++)); do
+        printf "█"
+    done
+    for ((i=filled_length; i<bar_length; i++)); do
+        printf "░"
+    done
+    printf "] %d%% %s${NC}" "$percentage" "$message"
+    
+    if [ $current -eq $total ]; then
+        echo ""
+    fi
+}
+
+display_welcome() {
     clear
-    echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${PURPLE}║${WHITE}                 PTERODACTYL PANEL REPAIR TOOL                 ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${CYAN}                        Version 2.0                            ${PURPLE}║${NC}"
-    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${PURPLE}"
+    cat << "EOF"
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║                                                                      ║
+    ║      ██████╗ ████████╗███████╗██████╗  ██████╗ ██████╗ ███████╗     ║
+    ║      ██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔═══██╗██╔══██╗██╔════╝     ║
+    ║      ██████╔╝   ██║   █████╗  ██████╔╝██║   ██║██║  ██║█████╗       ║
+    ║      ██╔═══╝    ██║   ██╔══╝  ██╔══██╗██║   ██║██║  ██║██╔══╝       ║
+    ║      ██║        ██║   ███████╗██║  ██║╚██████╔╝██████╔╝███████╗     ║
+    ║      ╚═╝        ╚═╝   ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝     ║
+    ║                                                                      ║
+    ║                    🔧 PANEL REPAIR & THEME REMOVER 🔧                ║
+    ║                            © Liwirya 2025                         ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}"
+    
+    echo -e "${WHITE}🛠️  Script ini akan membantu Anda:${NC}"
+    echo -e "${CYAN}   • Menghapus tema custom dan kembali ke tema default${NC}"
+    echo -e "${CYAN}   • Memperbaiki panel yang rusak atau error${NC}"
+    echo -e "${CYAN}   • Memperbarui file panel ke versi terbaru${NC}"
+    echo -e "${CYAN}   • Backup otomatis sebelum repair${NC}"
+    echo ""
+    echo -e "${GRAY}📱 Telegram: @senkaliwirya | 💼 Support: Liwirya Team${NC}"
     echo ""
 }
 
-loading_animation() {
-    local pid=$1
-    local msg=$2
-    local spin='-\|/'
-    local i=0
+check_root() {
+    if (( $EUID != 0 )); then
+        print_error "Script ini memerlukan akses root!"
+        echo -e "${YELLOW}💡 Solusi: Jalankan dengan 'sudo bash $0'${NC}"
+        exit 1
+    fi
     
-    while kill -0 $pid 2>/dev/null; do
-        i=$(( (i+1) %4 ))
-        printf "\r${CYAN}${GEAR} %s %s${NC}" "$msg" "${spin:$i:1}"
-        sleep 0.2
-    done
-    printf "\r"
+    print_status "Akses root terverifikasi"
 }
 
-check_prerequisites() {
-    print_status "${INFO} Checking prerequisites..." "$BLUE"
+detect_system() {
+    print_info "🔍 Mendeteksi konfigurasi sistem..."
     
-    if (( $EUID != 0 )); then
-        print_status "${ERROR} This script must be run as root!" "$RED"
-        print_status "${INFO} Please run: sudo bash repair.sh" "$YELLOW"
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS_NAME="$NAME"
+        OS_VERSION="$VERSION"
+    else
+        OS_NAME="Unknown"
+        OS_VERSION="Unknown"
+    fi
+    
+    if command -v php >/dev/null 2>&1; then
+        PHP_VERSION=$(php -v | head -n1 | cut -d" " -f2 | cut -c1-3)
+        print_status "PHP $PHP_VERSION terdeteksi"
+    else
+        print_error "PHP tidak ditemukan!"
         exit 1
     fi
     
-    if [ ! -d "/var/www/pterodactyl" ]; then
-        print_status "${ERROR} Pterodactyl panel directory not found!" "$RED"
-        print_status "${INFO} Please ensure Pterodactyl Panel is installed at /var/www/pterodactyl" "$YELLOW"
+    if systemctl is-active --quiet nginx; then
+        WEB_SERVER="nginx"
+        print_status "Web server: Nginx"
+    elif systemctl is-active --quiet apache2; then
+        WEB_SERVER="apache2"
+        print_status "Web server: Apache2"
+    else
+        print_warning "Web server tidak terdeteksi atau tidak berjalan"
+    fi
+    
+    if [ ! -d "$PANEL_DIR" ]; then
+        print_error "Direktori Pterodactyl tidak ditemukan di $PANEL_DIR"
+        echo -e "${YELLOW}💡 Pastikan Pterodactyl Panel sudah terinstall${NC}"
         exit 1
     fi
     
-    local commands=("curl" "tar" "php" "composer")
-    for cmd in "${commands[@]}"; do
-        if ! command -v $cmd &> /dev/null; then
-            print_status "${ERROR} Required command '$cmd' not found!" "$RED"
-            exit 1
+    if [ -f "$PANEL_DIR/config/app.php" ]; then
+        cd "$PANEL_DIR"
+        PTERODACTYL_VERSION=$(php artisan --version | cut -d" " -f3)
+        print_status "Pterodactyl Panel v$PTERODACTYL_VERSION terdeteksi"
+    fi
+}
+
+show_system_info() {
+    print_header "INFORMASI SISTEM"
+    
+    echo -e "${CYAN}🖥️  Operating System:${NC} $OS_NAME $OS_VERSION"
+    echo -e "${CYAN}🐘 PHP Version:${NC} $PHP_VERSION"
+    echo -e "${CYAN}🌐 Web Server:${NC} $WEB_SERVER"
+    echo -e "${CYAN}🦅 Panel Version:${NC} $PTERODACTYL_VERSION"
+    echo -e "${CYAN}📁 Panel Directory:${NC} $PANEL_DIR"
+    echo -e "${CYAN}💾 Disk Usage:${NC} $(df -h $PANEL_DIR | tail -1 | awk '{print $5}')"
+    echo -e "${CYAN}🔧 User:${NC} $(whoami)"
+    echo ""
+    
+    if systemctl is-active --quiet "$WEB_SERVER" && [ -f "$PANEL_DIR/artisan" ]; then
+        echo -e "${GREEN}✅ Panel Status: Online${NC}"
+    else
+        echo -e "${RED}❌ Panel Status: Offline${NC}"
+    fi
+    echo ""
+}
+
+create_backup() {
+    print_header "MEMBUAT BACKUP"
+    
+    local backup_name="pterodactyl-backup-$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
+    
+    print_info "📦 Membuat backup di: $BACKUP_DIR/$backup_name"
+    
+    if command -v mysqldump >/dev/null 2>&1; then
+        print_info "🗄️  Backup database..."
+        local db_name=$(grep DB_DATABASE "$PANEL_DIR/.env" | cut -d'=' -f2)
+        local db_user=$(grep DB_USERNAME "$PANEL_DIR/.env" | cut -d'=' -f2)
+        local db_pass=$(grep DB_PASSWORD "$PANEL_DIR/.env" | cut -d'=' -f2)
+        
+        if [ -n "$db_name" ]; then
+            mysqldump -u "$db_user" -p"$db_pass" "$db_name" > "$BACKUP_DIR/$backup_name-database.sql" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                print_status "✅ Database backup berhasil"
+            else
+                print_warning "⚠️  Database backup gagal, melanjutkan tanpa backup DB"
+            fi
+        fi
+    fi
+    
+    print_info "📁 Backup file panel..."
+    tar -czf "$BACKUP_DIR/$backup_name-files.tar.gz" -C /var/www pterodactyl --exclude="node_modules" --exclude="storage/logs/*" 2>/dev/null
+    
+    if [ $? -eq 0 ]; then
+        print_status "✅ File backup berhasil disimpan"
+        echo -e "${GRAY}📍 Backup location: $BACKUP_DIR/$backup_name-*${NC}"
+    else
+        print_warning "⚠️  File backup gagal"
+    fi
+    
+    echo ""
+}
+
+pre_flight_checks() {
+    print_header "PEMERIKSAAN SISTEM"
+    
+    local errors=0
+    
+    local disk_usage=$(df "$PANEL_DIR" | tail -1 | awk '{print $5}' | sed 's/%//')
+    if [ "$disk_usage" -gt 90 ]; then
+        print_error "Disk space hampir penuh ($disk_usage%)"
+        ((errors++))
+    else
+        print_status "Disk space tersedia ($disk_usage% used)"
+    fi
+    
+    local mem_available=$(free -m | awk 'NR==2{printf "%.0f", $7*100/$2}')
+    if [ "$mem_available" -lt 10 ]; then
+        print_warning "Memory tersisa rendah"
+    else
+        print_status "Memory tersedia cukup"
+    fi
+    
+    if ping -c 1 github.com >/dev/null 2>&1; then
+        print_status "Koneksi internet tersedia"
+    else
+        print_error "Tidak ada koneksi internet"
+        ((errors++))
+    fi
+    
+    local required_commands=("php" "composer" "curl" "tar")
+    for cmd in "${required_commands[@]}"; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            print_status "$cmd tersedia"
+        else
+            print_error "$cmd tidak ditemukan"
+            ((errors++))
         fi
     done
     
-    print_status "${SUCCESS} All prerequisites met!" "$GREEN"
-    echo ""
-}
-
-backup_panel() {
-    print_status "${INFO} Creating backup..." "$BLUE"
-    
-    local backup_dir="/var/backups/pterodactyl_$(date +%Y%m%d_%H%M%S)"
-    
-    mkdir -p "$backup_dir" &
-    local pid=$!
-    loading_animation $pid "Creating backup directory"
-    
-    if cp -r /var/www/pterodactyl "$backup_dir/" 2>/dev/null; then
-        print_status "${SUCCESS} Backup created at: $backup_dir" "$GREEN"
-        return 0
-    else
-        print_status "${WARNING} Backup failed, continuing without backup..." "$YELLOW"
-        return 1
+    if [ $errors -gt 0 ]; then
+        echo ""
+        print_error "Ditemukan $errors error(s). Tidak dapat melanjutkan."
+        echo -e "${YELLOW}💡 Perbaiki error di atas terlebih dahulu${NC}"
+        exit 1
     fi
+    
+    print_status "✅ Semua pemeriksaan berhasil!"
+    echo ""
 }
 
-repairPanel() {
-    print_status "${ROCKET} Starting Pterodactyl Panel repair process..." "$PURPLE"
-    echo ""
+repair_panel() {
+    print_header "PROSES REPAIR PANEL"
     
-    cd /var/www/pterodactyl || {
-        print_status "${ERROR} Failed to change to pterodactyl directory!" "$RED"
+    cd "$PANEL_DIR" || {
+        print_error "Tidak dapat masuk ke direktori panel"
         exit 1
     }
     
-    print_status "${INFO} Step 1/9: Putting panel in maintenance mode..." "$BLUE"
-    if php artisan down --render="errors::503" --secret="repair" 2>/dev/null; then
-        print_status "${SUCCESS} Panel is now in maintenance mode" "$GREEN"
-    else
-        print_status "${WARNING} Failed to enable maintenance mode, continuing..." "$YELLOW"
+    print_info "🔒 Mengaktifkan maintenance mode..."
+    php artisan down --message="Panel sedang dalam maintenance" --retry=60 2>/dev/null
+    show_progress 1 8 "Maintenance mode aktif"
+    
+    print_info "💾 Backup resources lama..."
+    if [ -d "resources" ]; then
+        mv resources resources.backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null
     fi
-    echo ""
+    show_progress 2 8 "Resources di-backup"
     
-    if [ -d "/var/www/pterodactyl/resources" ]; then
-        print_status "${INFO} Step 2/9: Backing up current resources..." "$BLUE"
-        mv /var/www/pterodactyl/resources /var/www/pterodactyl/resources.backup.$(date +%s) 2>/dev/null
-        print_status "${SUCCESS} Resources backed up" "$GREEN"
-    else
-        print_status "${INFO} Step 2/9: No resources directory found, skipping backup" "$BLUE"
-    fi
-    echo ""
+    print_info "⬇️  Download panel terbaru..."
+    curl -L https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz | tar -xzv >/dev/null 2>&1 &
+    local download_pid=$!
+    show_spinner $download_pid "Downloading panel files..."
+    wait $download_pid
+    show_progress 3 8 "Panel terbaru di-download"
     
-    print_status "${INFO} Step 3/9: Downloading latest Pterodactyl Panel..." "$BLUE"
-    if curl -L --progress-bar https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz | tar -xzv >/dev/null 2>&1; then
-        print_status "${SUCCESS} Latest panel downloaded and extracted" "$GREEN"
-    else
-        print_status "${ERROR} Failed to download panel!" "$RED"
-        print_status "${INFO} Restoring maintenance mode..." "$YELLOW"
-        php artisan up 2>/dev/null
-        exit 1
-    fi
-    echo ""
+    print_info "🔐 Mengatur permissions..."
+    chmod -R 755 storage/* bootstrap/cache/ 2>/dev/null
+    show_progress 4 8 "Permissions diatur"
     
-    print_status "${INFO} Step 4/9: Setting correct permissions..." "$BLUE"
-    chmod -R 755 storage/* bootstrap/cache 2>/dev/null
-    print_status "${SUCCESS} Permissions updated" "$GREEN"
-    echo ""
+    print_info "📦 Install dependencies..."
+    composer install --no-dev --optimize-autoloader >/dev/null 2>&1 &
+    local composer_pid=$!
+    show_spinner $composer_pid "Installing composer dependencies..."
+    wait $composer_pid
+    show_progress 5 8 "Dependencies terinstall"
     
-    print_status "${INFO} Step 5/9: Installing/updating dependencies..." "$BLUE"
-    if composer install --no-dev --optimize-autoloader --quiet; then
-        print_status "${SUCCESS} Dependencies installed successfully" "$GREEN"
-    else
-        print_status "${WARNING} Some issues with composer, but continuing..." "$YELLOW"
-    fi
-    echo ""
-    
-    print_status "${INFO} Step 6/9: Clearing application caches..." "$BLUE"
+    print_info "🧹 Clear caches..."
     php artisan view:clear >/dev/null 2>&1
     php artisan config:clear >/dev/null 2>&1
     php artisan route:clear >/dev/null 2>&1
     php artisan cache:clear >/dev/null 2>&1
-    print_status "${SUCCESS} Caches cleared" "$GREEN"
-    echo ""
+    show_progress 6 8 "Cache dibersihkan"
     
-    print_status "${INFO} Step 7/9: Running database migrations..." "$BLUE"
-    if php artisan migrate --seed --force >/dev/null 2>&1; then
-        print_status "${SUCCESS} Database migrations completed" "$GREEN"
-    else
-        print_status "${WARNING} Database migrations had issues, but continuing..." "$YELLOW"
-    fi
-    echo ""
+    print_info "🗄️  Jalankan database migrations..."
+    php artisan migrate --seed --force >/dev/null 2>&1
+    show_progress 7 8 "Database migrations selesai"
     
-    print_status "${INFO} Step 8/9: Setting correct file ownership..." "$BLUE"
-    chown -R www-data:www-data /var/www/pterodactyl/* 2>/dev/null
-    print_status "${SUCCESS} File ownership updated" "$GREEN"
-    echo ""
+    print_info "👤 Set ownership dan restart services..."
+    chown -R www-data:www-data "$PANEL_DIR"/* 2>/dev/null
     
-    print_status "${INFO} Step 9/9: Restarting queue and bringing panel online..." "$BLUE"
     php artisan queue:restart >/dev/null 2>&1
+    
+    if [ -n "$WEB_SERVER" ]; then
+        systemctl restart "$WEB_SERVER" >/dev/null 2>&1
+    fi
+    
     php artisan up >/dev/null 2>&1
-    print_status "${SUCCESS} Panel is back online!" "$GREEN"
+    
+    show_progress 8 8 "Repair selesai!"
     echo ""
     
-    print_status "${ROCKET} Repair process completed successfully!" "$GREEN"
-    print_status "${INFO} Your Pterodactyl Panel has been repaired and updated to the latest version." "$BLUE"
+    print_status "✅ Panel berhasil diperbaiki!"
+    print_info "🌐 Panel sekarang online dan siap digunakan"
+    
+    local panel_url=$(grep APP_URL "$PANEL_DIR/.env" | cut -d'=' -f2- | tr -d '"')
+    if [ -n "$panel_url" ]; then
+        echo -e "${CYAN}🔗 URL Panel: $panel_url${NC}"
+    fi
 }
 
-show_confirmation() {
-    echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║${RED}                         WARNING!                             ${YELLOW}║${NC}"
-    echo -e "${YELLOW}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${YELLOW}║${WHITE} This will:                                                  ${YELLOW}║${NC}"
-    echo -e "${YELLOW}║${WHITE} • Put the panel in maintenance mode                        ${YELLOW}║${NC}"
-    echo -e "${YELLOW}║${WHITE} • Remove current theme/customizations                      ${YELLOW}║${NC}"
-    echo -e "${YELLOW}║${WHITE} • Download and install the latest panel version            ${YELLOW}║${NC}"
-    echo -e "${YELLOW}║${WHITE} • Reset to default Pterodactyl theme                       ${YELLOW}║${NC}"
-    echo -e "${YELLOW}║${WHITE} • Run database migrations                                   ${YELLOW}║${NC}"
-    echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════╝${NC}"
+confirm_repair() {
     echo ""
+    print_header "KONFIRMASI REPAIR"
+    
+    echo -e "${YELLOW}⚠️  PERHATIAN PENTING:${NC}"
+    echo -e "${WHITE}   • Proses ini akan menghapus tema custom yang terpasang${NC}"
+    echo -e "${WHITE}   • Panel akan kembali ke tema default Pterodactyl${NC}"
+    echo -e "${WHITE}   • Backup otomatis akan dibuat sebelum repair${NC}"
+    echo -e "${WHITE}   • Panel akan offline sementara selama proses repair${NC}"
+    echo -e "${WHITE}   • Data server dan user tidak akan terpengaruh${NC}"
+    echo ""
+    
+    echo -e "${CYAN}⏱️  Estimasi waktu: 2-5 menit${NC}"
+    echo -e "${CYAN}📊 Proses: 8 langkah otomatis${NC}"
+    echo ""
+    
+    while true; do
+        echo -e "${YELLOW}❓ Lanjutkan proses repair? ${NC}"
+        echo -e "${CYAN}[Y]${NC} Ya, lanjutkan repair"
+        echo -e "${CYAN}[N]${NC} Tidak, batalkan"
+        echo -e "${CYAN}[I]${NC} Tampilkan info sistem"
+        echo -e "${CYAN}[B]${NC} Buat backup saja"
+        echo ""
+        
+        printf "${WHITE}Pilihan Anda (Y/N/I/B): ${NC}"
+        read -r choice
+        
+        case ${choice^^} in
+            Y|YES)
+                echo ""
+                print_status "🚀 Memulai proses repair..."
+                return 0
+                ;;
+            N|NO)
+                echo ""
+                print_status "❌ Proses repair dibatalkan"
+                echo -e "${GRAY}Terima kasih telah menggunakan Liwirya Repair Tool${NC}"
+                exit 0
+                ;;
+            I|INFO)
+                echo ""
+                show_system_info
+                ;;
+            B|BACKUP)
+                echo ""
+                create_backup
+                echo ""
+                print_status "✅ Backup selesai, script akan keluar"
+                exit 0
+                ;;
+            *)
+                print_error "Pilihan tidak valid! Gunakan Y, N, I, atau B."
+                echo ""
+                ;;
+        esac
+    done
+}
+
+show_final_results() {
+    clear
+    print_header "REPAIR SELESAI"
+    
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ██████╗ ███████╗██████╗  █████╗ ██╗██████╗     ███████╗██╗   ██╗██╗  ██╗███████╗███████╗
+    ██╔══██╗██╔════╝██╔══██╗██╔══██╗██║██╔══██╗    ██╔════╝██║   ██║██║ ██╔╝██╔════╝██╔════╝
+    ██████╔╝█████╗  ██████╔╝███████║██║██████╔╝    ███████╗██║   ██║█████╔╝ ███████╗█████╗  
+    ██╔══██╗██╔══╝  ██╔═══╝ ██╔══██║██║██╔══██╗    ╚════██║██║   ██║██╔═██╗ ╚════██║██╔══╝  
+    ██║  ██║███████╗██║     ██║  ██║██║██║  ██║    ███████║╚██████╔╝██║  ██╗███████║███████╗
+    ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+EOF
+    echo -e "${NC}"
+    
+    echo -e "${WHITE}🎉 Panel Pterodactyl berhasil diperbaiki!${NC}"
+    echo ""
+    
+    echo -e "${CYAN}📋 RINGKASAN REPAIR:${NC}"
+    echo -e "${WHITE}   ✅ Tema dikembalikan ke default${NC}"
+    echo -e "${WHITE}   ✅ Panel diperbarui ke versi terbaru${NC}"
+    echo -e "${WHITE}   ✅ Cache dibersihkan${NC}"
+    echo -e "${WHITE}   ✅ Database migrations dijalankan${NC}"
+    echo -e "${WHITE}   ✅ Permissions diperbaiki${NC}"
+    echo -e "${WHITE}   ✅ Services direstart${NC}"
+    echo ""
+    
+    echo -e "${YELLOW}🔧 LANGKAH SELANJUTNYA:${NC}"
+    echo -e "${WHITE}   1. Login ke panel admin Anda${NC}"
+    echo -e "${WHITE}   2. Periksa semua fungsi panel${NC}"
+    echo -e "${WHITE}   3. Install tema baru jika diperlukan${NC}"
+    echo -e "${WHITE}   4. Hapus backup lama jika tidak diperlukan${NC}"
+    echo ""
+    
+    if [ -d "$BACKUP_DIR" ] && [ "$(ls -A $BACKUP_DIR)" ]; then
+        echo -e "${GRAY}💾 Backup tersimpan di: $BACKUP_DIR${NC}"
+    fi
+    
+    echo -e "${GRAY}📱 Support: @LineXCloud | 🏢 Liwirya Team${NC}"
+    echo ""
+}
+
+cleanup() {
+    if [ -f "/tmp/pterodactyl-repair.lock" ]; then
+        rm -f "/tmp/pterodactyl-repair.lock"
+    fi
 }
 
 main() {
-    print_header
-    check_prerequisites
+    trap cleanup EXIT
     
-    print_status "${INFO} System Information:" "$BLUE"
-    echo -e "   ${WHITE}OS:${NC} $(lsb_release -d 2>/dev/null | cut -f2 || echo "Unknown")"
-    echo -e "   ${WHITE}PHP Version:${NC} $(php -v | head -n1 | cut -d' ' -f2)"
-    echo -e "   ${WHITE}Current Directory:${NC} $(pwd)"
+    echo $$ > "/tmp/pterodactyl-repair.lock"
+    
+    touch "$LOG_FILE"
+    log_message "Repair script started by user: $(whoami)"
+    
+    display_welcome
+    check_root
+    detect_system
+    show_system_info
+    pre_flight_checks
+    confirm_repair
+    
     echo ""
+    create_backup
+    repair_panel
+    show_final_results
     
-    while true; do
-        read -p "$(echo -e "${CYAN}${INFO} Do you want to create a backup before proceeding? [y/N]: ${NC}")" backup_choice
-        case $backup_choice in
-            [Yy]* ) 
-                backup_panel
-                break
-                ;;
-            [Nn]* | "" ) 
-                print_status "${WARNING} Proceeding without backup..." "$YELLOW"
-                break
-                ;;
-            * ) 
-                print_status "${ERROR} Please answer yes (y) or no (n)" "$RED"
-                ;;
-        esac
+    log_message "Repair script completed successfully"
+    
+    echo -e "${GRAY}Script akan keluar dalam 10 detik...${NC}"
+    for i in {10..1}; do
+        printf "\r${GRAY}Keluar dalam: %d detik${NC}" $i
+        sleep 1
     done
     echo ""
-    
-    show_confirmation
-    
-    while true; do
-        read -p "$(echo -e "${CYAN}${WARNING} Are you sure you want to repair/reset the Pterodactyl Panel? [y/N]: ${NC}")" yn
-        case $yn in
-            [Yy]* ) 
-                echo ""
-                repairPanel
-                break
-                ;;
-            [Nn]* | "" ) 
-                print_status "${INFO} Operation cancelled by user." "$BLUE"
-                print_status "${SUCCESS} No changes were made to your system." "$GREEN"
-                exit 0
-                ;;
-            * ) 
-                print_status "${ERROR} Please answer yes (y) or no (n)" "$RED"
-                ;;
-        esac
-    done
-    
-    echo ""
-    print_status "${SUCCESS} Thank you for using Pterodactyl Panel Repair Tool!" "$GREEN"
-    print_status "${INFO} If you encounter any issues, please check the Pterodactyl documentation." "$BLUE"
 }
 
-trap 'echo -e "\n${RED}${ERROR} Script interrupted by user${NC}"; php artisan up 2>/dev/null; exit 1' INT
-
-main
+main "$@"

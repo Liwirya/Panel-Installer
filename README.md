@@ -1,4 +1,4 @@
-# 🚀 Pterodactyl Theme Auto Installer
+# 🚀 Pterodactyl Installer
 
 <div align="center">
 
@@ -11,7 +11,7 @@
 
 ## 📋 Deskripsi
 
-Tool otomatis untuk menginstall berbagai tema Pterodactyl Panel dengan mudah dan cepat. Script ini mendukung instalasi berbagai tema populer dan menyediakan fitur uninstall untuk mengembalikan panel ke kondisi default.
+Tools digunakan dalam penginstalan panel ptreodactyl (install node, wings, serta uninstall ) secara otomatis, berserta tema yang dapat diinstal dan diunistall kembali ke semula
 
 ## ⚡ Instalasi Cepat
 
@@ -92,7 +92,7 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/in
 - Pilih tema yang ingin diinstall
 - Masukkan kode token: `linebaik`
 - Tunggu proses instalasi selesai
-- Refresh browser untuk melihat tema baru
+- Refresh browser untuk melihat tema baru yg udh diinstall
 
 ### 4. Uninstall Tema (jika diperlukan)
 - Jalankan script lagi
@@ -146,7 +146,7 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/re
 ## 📞 Support & Bantuan
 
 ### 🆘 Butuh Bantuan?
-- 💬 **Discord:** [Join Server](https://discord.gg/your-server)
+- 💬 **Discord:** [Join Server](https://discord.gg/Clorinde-ID)
 - 📧 **Email:** wiraliwirya@gmail.com
 - 🐛 **Bug Report:** [GitHub Issues](https://github.com/Liwirya/Panel-Installer/issues)
 

@@ -11,27 +11,18 @@
 
 ## 📋 Deskripsi
 
-Tools digunakan dalam penginstallan panel ptreodactyl (install node, wings, serta uninstall ) secara otomatis, berserta tema yang dapat diinstal dan diunistall kembali ke semula
+Tools ini dimana digunakan / membantu user dalam penginstallan panel ptreodactyl dan juga dapat mengembalikan / memperbaiki error ketika terjadi keselahan proses atau instalisasi
 
-## ⚡ Instalasi Cepat
+## ⚡ Command
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh)
 ```
 
-> **Catatan:** Pastikan menjalankan command di atas sebagai user root atau menggunakan `sudo`
+> **Catatan:** Pastikan dalam menjalankan command di atas wajih menggunakann vps dengan user root atau menggunakan `sudo`
 
-## 🎨 Fitur Tema Yang Tersedia
-
-### ✨ Tema Premium
-| Nama Tema | Deskripsi | Status |
-|-----------|-----------|--------|
-| **Stellar** | Tema modern dengan dark mode | ✅ Tersedia |
-| **Billing** | Tema khusus untuk billing system | ✅ Tersedia |
-| **Enigma** | Tema elegan dengan animasi smooth | ✅ Tersedia |
-
-### 🛠️ Fitur Tambahan
-- 🔧 **Instalasi Otomatis** - Install tema dengan satu klik
+### 🛠️ Fitur Unggupan
+- 🔧 **Instalasi Otomatis** - Install Panel Ptreodactyl secara otomatis
 - 🗑️ **Uninstall Tema** - Kembalikan ke tema default Pterodactyl
 - 🔐 **System Keamanan** - Menggunakan token akses untuk keamanan
 - 📊 **Progress Indicator** - Menampilkan progress instalasi
@@ -59,17 +50,6 @@ Token: Liwirya2025
 | | 8 | ⚠️ Limited Support |
 
 > **Catatan:** Sistem operasi di atas telah ditest secara langsung. Untuk OS lain, silakan test sendiri atau hubungi developer.
-
-## 📦 Prasyarat Sistem
-
-Pastikan sistem Anda memenuhi requirements berikut:
-
-- ✅ **Pterodactyl Panel** sudah terinstall dan berjalan
-- ✅ **Root Access** atau sudo privileges
-- ✅ **Internet Connection** untuk download tema
-- ✅ **PHP** versi 8.0 atau lebih tinggi
-- ✅ **Composer** terinstall dan dapat diakses
-- ✅ **Web Server** (Nginx/Apache) berjalan normal
 
 ## 🚀 Cara Penggunaan
 

@@ -9,10 +9,6 @@
   <img src="https://img.shields.io/badge/Language-Bahasa%20Indonesia-red?style=for-the-badge" alt="Language">
 </div>
 
-## 📋 Deskripsi
-
-Tools ini dimana digunakan / membantu user dalam penginstallan panel ptreodactyl dan juga dapat mengembalikan / memperbaiki error ketika terjadi keselahan proses atau instalisasi
-
 ## ⚡ Command
 
 ```bash
@@ -139,10 +135,6 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 ```
-
-## ⭐ Dukung Project Ini
-
-Jika project ini membantu Anda, berikan bintang di GitHub dan share ke teman teman!
 
 ### 💖 Donasi
 - **Trakteer:** [Trakteer Saya](https://trakteer.id/liwirya)

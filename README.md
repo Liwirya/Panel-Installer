@@ -17,7 +17,7 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/in
 
 > **Catatan:** Pastikan dalam menjalankan command di atas wajib dengan vps atau menggunakan `sudo`
 
-### 🛠️ Fitur Unggupan
+### 🛠️ Fitur:
 - 🔧 **Instalasi Otomatis** - Install Panel Ptreodactyl secara otomatis
 - 🗑️ **Uninstall Tema** - Kembalikan ke tema default Pterodactyl
 - 🔐 **System Keamanan** - Menggunakan token akses untuk keamanan

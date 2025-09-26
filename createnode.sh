@@ -2,7 +2,7 @@
 
 # =============================================================================
 # PTERODACTYL NODE & LOCATION CREATOR
-# Versi: 2.0 
+# Versi: 2.1
 # Dibuat oleh: Liwirya
 # =============================================================================
 
@@ -16,6 +16,7 @@ WHITE='\033[1;37m'
 NC='\033[0m'
 
 LOG_FILE="/var/log/pterodactyl-nodemaker.log"
+PANEL_DIR="/var/www/pterodactyl"
 
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
@@ -46,9 +47,14 @@ validate_domain() {
     local domain=$1
     if [[ $domain =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
         return 0
-    else
-        return 1
+    elif [[ $domain =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        # Basic IPv4 check
+        IFS='.' read -r a b c d <<< "$domain"
+        if [ "$a" -le 255 ] && [ "$b" -le 255 ] && [ "$c" -le 255 ] && [ "$d" -le 255 ]; then
+            return 0
+        fi
     fi
+    return 1
 }
 
 validate_number() {
@@ -70,143 +76,139 @@ validate_port() {
 }
 
 check_database_connection() {
-    print_status "🔍 Memeriksa koneksi database..."
+    print_status "Memeriksa koneksi database..."
     
-    cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
-        return 1
-    }
-    
-    php artisan migrate:status > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        print_status "✅ Koneksi database berhasil!"
-        return 0
-    else
-        print_error "❌ Koneksi database gagal!"
-        print_error "Pastikan database sudah dikonfigurasi dengan benar."
+    if [ ! -d "$PANEL_DIR" ]; then
+        print_error "Direktori Pterodactyl tidak ditemukan di $PANEL_DIR!"
         return 1
     fi
-}
-
-check_location_exists() {
-    local location_name=$1
-    cd /var/www/pterodactyl
     
-    if php artisan tinker --execute "echo \App\Models\Location::where('short', '$location_name')->exists() ? 'exists' : 'not_exists';" 2>/dev/null | grep -q "exists"; then
-        return 0
-    else
+    cd "$PANEL_DIR" || return 1
+    
+    if ! php artisan migrate:status > /dev/null 2>&1; then
+        print_error "Koneksi database gagal! Pastikan .env sudah dikonfigurasi."
         return 1
     fi
+    
+    print_status "Koneksi database berhasil!"
+    return 0
 }
 
-list_existing_locations() {
-    print_status "📍 Lokasi yang sudah tersedia:"
-    cd /var/www/pterodactyl
-    
-    php artisan tinker --execute "
-        \$locations = \App\Models\Location::all();
-        foreach(\$locations as \$location) {
-            echo 'ID: ' . \$location->id . ' | Short: ' . \$location->short . ' | Long: ' . \$location->long . PHP_EOL;
+location_exists() {
+    local short=$1
+    cd "$PANEL_DIR" || return 1
+    php -r "
+        require 'vendor/autoload.php';
+        \$app = require 'bootstrap/app.php';
+        \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+        \$kernel->bootstrap();
+        \$exists = \App\Models\Location::where('short', '$short')->exists();
+        echo \$exists ? '1' : '0';
+    " 2>/dev/null | grep -q "1"
+}
+
+get_location_id() {
+    local short=$1
+    cd "$PANEL_DIR" || return 1
+    php -r "
+        require 'vendor/autoload.php';
+        \$app = require 'bootstrap/app.php';
+        \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+        \$kernel->bootstrap();
+        \$loc = \App\Models\Location::where('short', '$short')->first();
+        echo \$loc ? \$loc->id : '';
+    " 2>/dev/null
+}
+
+list_locations() {
+    cd "$PANEL_DIR" || return 1
+    php -r "
+        require 'vendor/autoload.php';
+        \$app = require 'bootstrap/app.php';
+        \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+        \$kernel->bootstrap();
+        \$locs = \App\Models\Location::all();
+        foreach (\$locs as \$l) {
+            echo \"ID: {\$l->id} | Short: {\$l->short} | Long: {\$l->long}\n\";
         }
-    " 2>/dev/null | grep -E "ID: [0-9]+" || echo "Belum ada lokasi yang dibuat."
+    " 2>/dev/null
 }
 
 get_system_info() {
     print_header "                    INFORMASI SISTEM                    "
-    
-    echo -e "${CYAN}🖥️  Hostname:${NC} $(hostname)"
-    echo -e "${CYAN}🌐 IP Publik:${NC} $(curl -s ifconfig.me 2>/dev/null || echo "Tidak dapat dideteksi")"
-    echo -e "${CYAN}💾 RAM Total:${NC} $(free -h | awk '/^Mem:/ {print $2}')"
-    echo -e "${CYAN}💿 Disk Tersedia:${NC} $(df -h / | awk 'NR==2 {print $4}')"
-    echo -e "${CYAN}🐧 OS:${NC} $(lsb_release -d 2>/dev/null | cut -f2 || cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
+    echo -e "${CYAN}Hostname:${NC} $(hostname)"
+    echo -e "${CYAN}IP Publik:${NC} $(curl -s --max-time 5 ifconfig.me 2>/dev/null || echo "Tidak dapat dideteksi")"
+    echo -e "${CYAN}RAM Total:${NC} $(free -h | awk '/^Mem:/ {print $2}')"
+    echo -e "${CYAN}Disk Tersedia:${NC} $(df -h / | awk 'NR==2 {print $4}')"
+    echo -e "${CYAN}OS:${NC} $(lsb_release -d 2>/dev/null | cut -f2 || cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
     echo ""
 }
 
 display_welcome() {
     clear
     echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${PURPLE}║${NC}                                                                      ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}            ${WHITE}🚀 PTERODACTYL NODE & LOCATION CREATOR 🚀${NC}            ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}                         ${CYAN}© Liwirya 2025${NC}                         ${PURPLE}║${NC}"
-    echo -e "${PURPLE}║${NC}                                                                      ${PURPLE}║${NC}"
+    echo -e "${PURPLE}║                                                                      ${PURPLE}║${NC}"
+    echo -e "${PURPLE}║            PTERODACTYL NODE & LOCATION CREATOR                        ${PURPLE}║${NC}"
+    echo -e "${PURPLE}║                         © Liwirya 2025                               ${PURPLE}║${NC}"
+    echo -e "${PURPLE}║                                                                      ${PURPLE}║${NC}"
     echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${WHITE}Script ini akan membantu Anda membuat Node dan Lokasi baru${NC}"
     echo -e "${WHITE}untuk Pterodactyl Panel dengan mudah dan otomatis.${NC}"
     echo ""
-    echo -e "${CYAN}📱 Telegram: @senkaliwirya${NC}"
-    echo -e "${CYAN}💼 Support : Clorinde ID Team${NC}"
+    echo -e "${CYAN}Telegram: @senkaliwirya${NC}"
+    echo -e "${CYAN}Support : Clorinde ID Team${NC}"
     echo ""
 }
 
 select_operation_mode() {
     echo -e "${YELLOW}Pilih operasi yang ingin dilakukan:${NC}"
-    echo -e "${CYAN}1.${NC} 🏗️  Buat Lokasi dan Node baru"
-    echo -e "${CYAN}2.${NC} 🖥️  Buat Node saja (gunakan lokasi yang ada)"
-    echo -e "${CYAN}3.${NC} 📍 Buat Lokasi saja"
-    echo -e "${CYAN}4.${NC} 📋 Lihat lokasi yang ada"
-    echo -e "${CYAN}5.${NC} ❌ Keluar"
+    echo -e "${CYAN}1.${NC} Buat Lokasi dan Node baru"
+    echo -e "${CYAN}2.${NC} Buat Node saja (gunakan lokasi yang ada)"
+    echo -e "${CYAN}3.${NC} Buat Lokasi saja"
+    echo -e "${CYAN}4.${NC} Lihat lokasi yang ada"
+    echo -e "${CYAN}5.${NC} Keluar"
     echo ""
-    
+
     while true; do
-        echo -e "${YELLOW}Masukkan pilihan (1-5):${NC}"
-        read -r operation_mode
-        
+        read -rp "Masukkan pilihan (1-5): " operation_mode
         case $operation_mode in
-            1|2|3|4|5)
-                break
-                ;;
-            *)
-                print_error "Pilihan tidak valid! Masukkan angka 1-5."
-                ;;
+            1|2|3|4|5) break ;;
+            *) print_error "Pilihan tidak valid! Masukkan angka 1-5." ;;
         esac
     done
 }
 
 create_location() {
-    local location_name=$1
-    local location_description=$2
-    
-    print_status "📍 Membuat lokasi: $location_name..."
-    
-    cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
-        return 1
-    }
-    
-    if php artisan p:location:make --no-interaction <<EOF
-$location_name
-$location_description
-EOF
-    then
-        print_status "✅ Lokasi '$location_name' berhasil dibuat!"
+    local short=$1
+    local long=$2
+    cd "$PANEL_DIR" || return 1
+    print_status "Membuat lokasi: $short..."
+    if php artisan p:location:make --no-interaction <<< "$short
+$long"; then
+        print_status "Lokasi '$short' berhasil dibuat!"
         return 0
     else
-        print_error "❌ Gagal membuat lokasi '$location_name'!"
+        print_error "Gagal membuat lokasi '$short'!"
         return 1
     fi
 }
 
 create_node() {
-    local node_name=$1
+    local name=$1
     local location_id=$2
     local domain=$3
     local ram=$4
-    local disk_space=$5
+    local disk=$5
     local daemon_port=${6:-8080}
-    local daemon_sftp_port=${7:-2022}
-    local daemon_base=${8:-/var/lib/pterodactyl/volumes}
-    
-    print_status "🖥️  Membuat node: $node_name..."
-    
-    cd /var/www/pterodactyl || {
-        print_error "Direktori Pterodactyl tidak ditemukan!"
-        return 1
-    }
-    
-    if php artisan p:node:make --no-interaction <<EOF
-$node_name
-Node $node_name - Auto created
+    local sftp_port=${7:-2022}
+    local base_dir=${8:-/var/lib/pterodactyl/volumes}
+
+    cd "$PANEL_DIR" || return 1
+    print_status "Membuat node: $name..."
+
+    if php artisan p:node:make --no-interaction <<< "$name
+Node $name - Auto created
 $location_id
 https
 $domain
@@ -215,403 +217,294 @@ no
 no
 $ram
 $ram
-$disk_space
-$disk_space
+$disk
+$disk
 100
 $daemon_port
-$daemon_sftp_port
-$daemon_base
-EOF
-    then
-        print_status "✅ Node '$node_name' berhasil dibuat!"
+$sftp_port
+$base_dir"; then
+        print_status "Node '$name' berhasil dibuat!"
         return 0
     else
-        print_error "❌ Gagal membuat node '$node_name'!"
+        print_error "Gagal membuat node '$name'!"
         return 1
     fi
 }
 
 input_location_data() {
     while true; do
-        echo -e "${CYAN}📍 Masukkan nama singkat lokasi (contoh: jakarta, singapore):${NC}"
-        read -r location_name
-        
+        read -rp "Masukkan nama singkat lokasi (contoh: jakarta): " location_name
         if [ -z "$location_name" ]; then
             print_error "Nama lokasi tidak boleh kosong!"
             continue
         fi
-        
         if [[ ! $location_name =~ ^[a-zA-Z0-9_-]+$ ]]; then
-            print_error "Nama lokasi hanya boleh mengandung huruf, angka, underscore, dan dash!"
+            print_error "Nama lokasi hanya boleh huruf, angka, underscore, dash."
             continue
         fi
-        
-        if check_location_exists "$location_name"; then
+        if location_exists "$location_name"; then
             print_error "Lokasi '$location_name' sudah ada!"
             continue
         fi
-        
         break
     done
-    
+
     while true; do
-        echo -e "${CYAN}📝 Masukkan deskripsi lokasi:${NC}"
-        read -r location_description
-        
+        read -rp "Masukkan deskripsi lokasi: " location_description
         if [ -z "$location_description" ]; then
-            print_error "Deskripsi lokasi tidak boleh kosong!"
+            print_error "Deskripsi tidak boleh kosong!"
             continue
         fi
-        
         break
     done
 }
 
 input_node_data() {
     while true; do
-        echo -e "${CYAN}🖥️  Masukkan nama node:${NC}"
-        read -r node_name
-        
-        if [ -z "$node_name" ]; then
-            print_error "Nama node tidak boleh kosong!"
-            continue
-        fi
-        
-        break
+        read -rp "Masukkan nama node: " node_name
+        [ -n "$node_name" ] && break
+        print_error "Nama node tidak boleh kosong!"
     done
-    
+
     while true; do
-        echo -e "${CYAN}🌐 Masukkan domain atau IP node (contoh: node1.domain.com):${NC}"
-        read -r domain
-        
+        read -rp "Masukkan domain atau IP node: " domain
         if [ -z "$domain" ]; then
             print_error "Domain/IP tidak boleh kosong!"
             continue
         fi
-        
-        if ! validate_domain "$domain"; then
-            if [[ ! $domain =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-                print_error "Format domain/IP tidak valid!"
-                continue
-            fi
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}💾 Masukkan total RAM dalam MB (contoh: 4096):${NC}"
-        read -r ram
-        
-        if ! validate_number "$ram"; then
-            print_error "RAM harus berupa angka positif!"
-            continue
-        fi
-        
-        if [ "$ram" -lt 512 ]; then
-            print_warning "RAM terlalu kecil! Minimal 512MB."
-            continue
-        fi
-        
-        break
-    done
-    
-    while true; do
-        echo -e "${CYAN}💿 Masukkan total disk space dalam MB (contoh: 20480):${NC}"
-        read -r disk_space
-        
-        if ! validate_number "$disk_space"; then
-            print_error "Disk space harus berupa angka positif!"
-            continue
-        fi
-        
-        if [ "$disk_space" -lt 1024 ]; then
-            print_warning "Disk space terlalu kecil! Minimal 1024MB."
-            continue
-        fi
-        
-        break
-    done
-    
-    echo -e "${YELLOW}🔧 Konfigurasi lanjutan (tekan Enter untuk default):${NC}"
-    
-    while true; do
-        echo -e "${CYAN}🔌 Port daemon (default: 8080):${NC}"
-        read -r daemon_port
-        
-        if [ -z "$daemon_port" ]; then
-            daemon_port=8080
+        if validate_domain "$domain"; then
             break
+        else
+            print_error "Format domain atau IP tidak valid!"
         fi
-        
-        if ! validate_port "$daemon_port"; then
-            print_error "Port tidak valid! Gunakan port 1-65535."
-            continue
-        fi
-        
-        break
     done
-    
+
     while true; do
-        echo -e "${CYAN}📁 Port SFTP (default: 2022):${NC}"
-        read -r daemon_sftp_port
-        
-        if [ -z "$daemon_sftp_port" ]; then
-            daemon_sftp_port=2022
+        read -rp "Masukkan RAM dalam MB (min 512): " ram
+        if validate_number "$ram" && [ "$ram" -ge 512 ]; then
             break
+        else
+            print_error "RAM harus angka >= 512"
         fi
-        
-        if ! validate_port "$daemon_sftp_port"; then
-            print_error "Port tidak valid! Gunakan port 1-65535."
-            continue
-        fi
-        
-        break
     done
-    
-    echo -e "${CYAN}📂 Direktori base daemon (default: /var/lib/pterodactyl/volumes):${NC}"
-    read -r daemon_base
-    
-    if [ -z "$daemon_base" ]; then
-        daemon_base="/var/lib/pterodactyl/volumes"
+
+    while true; do
+        read -rp "Masukkan disk space dalam MB (min 1024): " disk_space
+        if validate_number "$disk_space" && [ "$disk_space" -ge 1024 ]; then
+            break
+        else
+            print_error "Disk space harus angka >= 1024"
+        fi
+    done
+
+    read -rp "Port daemon (default 8080): " daemon_port
+    daemon_port=${daemon_port:-8080}
+    if ! validate_port "$daemon_port"; then
+        print_error "Port daemon tidak valid. Menggunakan default 8080."
+        daemon_port=8080
     fi
+
+    read -rp "Port SFTP (default 2022): " sftp_port
+    sftp_port=${sftp_port:-2022}
+    if ! validate_port "$sftp_port"; then
+        print_error "Port SFTP tidak valid. Menggunakan default 2022."
+        sftp_port=2022
+    fi
+
+    read -rp "Direktori base daemon (default /var/lib/pterodactyl/volumes): " daemon_base
+    daemon_base=${daemon_base:-/var/lib/pterodactyl/volumes}
 }
 
 select_existing_location() {
-    print_status "📍 Mengambil daftar lokasi yang tersedia..."
-    
-    cd /var/www/pterodactyl
-    
-    temp_file=$(mktemp)
-    php artisan tinker --execute "
-        \$locations = \App\Models\Location::all();
-        foreach(\$locations as \$location) {
-            echo \$location->id . '|' . \$location->short . '|' . \$location->long . PHP_EOL;
-        }
-    " 2>/dev/null > "$temp_file"
-    
-    if [ ! -s "$temp_file" ]; then
-        print_error "Tidak ada lokasi yang tersedia!"
-        print_status "Silakan buat lokasi terlebih dahulu."
-        rm -f "$temp_file"
+    print_status "Mengambil daftar lokasi..."
+    local locations
+    locations=$(list_locations)
+    if [ -z "$locations" ]; then
+        print_error "Tidak ada lokasi tersedia!"
         return 1
     fi
-    
-    echo -e "${YELLOW}📍 Lokasi yang tersedia:${NC}"
+
+    echo -e "${YELLOW}Lokasi yang tersedia:${NC}"
+    echo "$locations"
     echo ""
-    
-    local counter=1
-    declare -A location_map
-    
-    while IFS='|' read -r id short long; do
-        if [ -n "$id" ] && [ -n "$short" ] && [ -n "$long" ]; then
-            echo -e "${CYAN}$counter.${NC} ID: $id | $short - $long"
-            location_map[$counter]=$id
-            ((counter++))
+
+    local ids=()
+    while IFS= read -r line; do
+        if [[ $line =~ ID:\ ([0-9]+) ]]; then
+            ids+=("${BASH_REMATCH[1]}")
         fi
-    done < "$temp_file"
-    
-    echo ""
-    
+    done <<< "$locations"
+
     while true; do
-        echo -e "${YELLOW}Pilih nomor lokasi:${NC}"
-        read -r location_choice
-        
-        if [[ -n ${location_map[$location_choice]} ]]; then
-            selected_location_id=${location_map[$location_choice]}
-            break
-        else
-            print_error "Pilihan tidak valid!"
-        fi
+        read -rp "Masukkan ID lokasi: " selected_location_id
+        for id in "${ids[@]}"; do
+            if [ "$id" = "$selected_location_id" ]; then
+                return 0
+            fi
+        done
+        print_error "ID lokasi tidak valid!"
     done
-    
-    rm -f "$temp_file"
 }
 
 confirm_data() {
     echo ""
     print_header "                    KONFIRMASI DATA                    "
-    
+
     case $operation_mode in
         1)
-            echo -e "${CYAN}📍 Lokasi:${NC}"
-            echo -e "   Nama: $location_name"
-            echo -e "   Deskripsi: $location_description"
+            echo "Lokasi:"
+            echo "  Nama: $location_name"
+            echo "  Deskripsi: $location_description"
             echo ""
-            echo -e "${CYAN}🖥️  Node:${NC}"
-            echo -e "   Nama: $node_name"
-            echo -e "   Domain: $domain"
-            echo -e "   RAM: ${ram}MB"
-            echo -e "   Disk: ${disk_space}MB"
-            echo -e "   Port Daemon: $daemon_port"
-            echo -e "   Port SFTP: $daemon_sftp_port"
-            echo -e "   Base Directory: $daemon_base"
+            echo "Node:"
+            echo "  Nama: $node_name"
+            echo "  Domain: $domain"
+            echo "  RAM: ${ram}MB"
+            echo "  Disk: ${disk_space}MB"
+            echo "  Port Daemon: $daemon_port"
+            echo "  Port SFTP: $sftp_port"
+            echo "  Base Directory: $daemon_base"
             ;;
         2)
-            echo -e "${CYAN}🖥️  Node:${NC}"
-            echo -e "   Nama: $node_name"
-            echo -e "   Domain: $domain"
-            echo -e "   RAM: ${ram}MB"
-            echo -e "   Disk: ${disk_space}MB"
-            echo -e "   Port Daemon: $daemon_port"
-            echo -e "   Port SFTP: $daemon_sftp_port"
-            echo -e "   Base Directory: $daemon_base"
-            echo -e "   Location ID: $selected_location_id"
+            echo "Node:"
+            echo "  Nama: $node_name"
+            echo "  Domain: $domain"
+            echo "  RAM: ${ram}MB"
+            echo "  Disk: ${disk_space}MB"
+            echo "  Port Daemon: $daemon_port"
+            echo "  Port SFTP: $sftp_port"
+            echo "  Base Directory: $daemon_base"
+            echo "  Location ID: $selected_location_id"
             ;;
         3)
-            echo -e "${CYAN}📍 Lokasi:${NC}"
-            echo -e "   Nama: $location_name"
-            echo -e "   Deskripsi: $location_description"
+            echo "Lokasi:"
+            echo "  Nama: $location_name"
+            echo "  Deskripsi: $location_description"
             ;;
     esac
-    
+
     echo ""
-    echo -e "${YELLOW}❓ Apakah data sudah benar? (y/n):${NC}"
-    read -r confirm
-    
-    if [[ $confirm != "y" && $confirm != "Y" ]]; then
-        print_status "Operasi dibatalkan."
-        return 1
-    fi
-    
-    return 0
+    read -rp "Apakah data sudah benar? (y/n): " confirm
+    [[ $confirm == [Yy] ]]
 }
 
 display_results() {
     echo ""
     print_header "                    HASIL OPERASI                    "
-    
+
     case $operation_mode in
         1)
             if [ $location_created -eq 0 ] && [ $node_created -eq 0 ]; then
-                print_status "✅ Lokasi dan Node berhasil dibuat!"
+                print_status "Lokasi dan Node berhasil dibuat!"
                 echo ""
-                echo -e "${GREEN}📋 Informasi lengkap:${NC}"
-                echo -e "${CYAN}📍 Lokasi: $location_name - $location_description${NC}"
-                echo -e "${CYAN}🖥️  Node: $node_name${NC}"
-                echo -e "${CYAN}🌐 Domain: $domain${NC}"
-                echo -e "${CYAN}💾 RAM: ${ram}MB${NC}"
-                echo -e "${CYAN}💿 Disk: ${disk_space}MB${NC}"
-                
-                print_status "🔧 Langkah selanjutnya:"
-                echo -e "${YELLOW}1. Login ke panel admin${NC}"
-                echo -e "${YELLOW}2. Pergi ke Admin -> Nodes${NC}"
-                echo -e "${YELLOW}3. Klik node '$node_name'${NC}"
-                echo -e "${YELLOW}4. Copy konfigurasi dan jalankan di server node${NC}"
-                echo -e "${YELLOW}5. Install Wings di server node${NC}"
+                echo "Informasi:"
+                echo "Lokasi: $location_name - $location_description"
+                echo "Node: $node_name ($domain)"
+                echo "RAM: ${ram}MB | Disk: ${disk_space}MB"
+                echo ""
+                echo "Langkah selanjutnya:"
+                echo "1. Login ke panel admin"
+                echo "2. Buka Admin > Nodes"
+                echo "3. Klik node '$node_name'"
+                echo "4. Salin konfigurasi dan jalankan di server node"
+                echo "5. Install Wings di server node"
             else
-                print_error "❌ Ada kesalahan dalam proses pembuatan!"
+                print_error "Operasi gagal!"
             fi
             ;;
         2)
             if [ $node_created -eq 0 ]; then
-                print_status "✅ Node berhasil dibuat!"
-                echo ""
-                echo -e "${GREEN}📋 Informasi Node:${NC}"
-                echo -e "${CYAN}🖥️  Node: $node_name${NC}"
-                echo -e "${CYAN}🌐 Domain: $domain${NC}"
-                echo -e "${CYAN}💾 RAM: ${ram}MB${NC}"
-                echo -e "${CYAN}💿 Disk: ${disk_space}MB${NC}"
+                print_status "Node berhasil dibuat!"
+                echo "Node: $node_name ($domain)"
             else
-                print_error "❌ Gagal membuat node!"
+                print_error "Gagal membuat node!"
             fi
             ;;
         3)
             if [ $location_created -eq 0 ]; then
-                print_status "✅ Lokasi berhasil dibuat!"
-                echo ""
-                echo -e "${GREEN}📋 Informasi Lokasi:${NC}"
-                echo -e "${CYAN}📍 Nama: $location_name${NC}"
-                echo -e "${CYAN}📝 Deskripsi: $location_description${NC}"
+                print_status "Lokasi berhasil dibuat!"
+                echo "Nama: $location_name"
             else
-                print_error "❌ Gagal membuat lokasi!"
+                print_error "Gagal membuat lokasi!"
             fi
             ;;
     esac
-    
     echo ""
 }
 
 main() {
     touch "$LOG_FILE"
-    log_message "Node creator script started"
-    
+    log_message "Script dimulai"
+
     if [[ $EUID -ne 0 ]]; then
-        print_error "Script ini harus dijalankan sebagai root!"
+        print_error "Jalankan sebagai root!"
         exit 1
     fi
-    
+
     display_welcome
     get_system_info
-    
+
     if ! check_database_connection; then
         exit 1
     fi
-    
+
     select_operation_mode
-    
+
     case $operation_mode in
         1)
-            print_header "              BUAT LOKASI DAN NODE BARU              "
+            print_header "BUAT LOKASI DAN NODE BARU"
             input_location_data
             input_node_data
-            
             if confirm_data; then
                 create_location "$location_name" "$location_description"
                 location_created=$?
-                
                 if [ $location_created -eq 0 ]; then
-                    cd /var/www/pterodactyl
-                    location_id=$(php artisan tinker --execute "echo \App\Models\Location::where('short', '$location_name')->first()->id;" 2>/dev/null | tail -1)
-                    
-                    create_node "$node_name" "$location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$daemon_sftp_port" "$daemon_base"
-                    node_created=$?
+                    location_id=$(get_location_id "$location_name")
+                    if [ -z "$location_id" ]; then
+                        print_error "Gagal mendapatkan ID lokasi!"
+                        node_created=1
+                    else
+                        create_node "$node_name" "$location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$sftp_port" "$daemon_base"
+                        node_created=$?
+                    fi
                 else
                     node_created=1
                 fi
-                
                 display_results
             fi
             ;;
         2)
-            print_header "                BUAT NODE BARU                "
-            
+            print_header "BUAT NODE BARU"
             if ! select_existing_location; then
                 exit 1
             fi
-            
             input_node_data
-            
             if confirm_data; then
-                create_node "$node_name" "$selected_location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$daemon_sftp_port" "$daemon_base"
+                create_node "$node_name" "$selected_location_id" "$domain" "$ram" "$disk_space" "$daemon_port" "$sftp_port" "$daemon_base"
                 node_created=$?
-                
                 display_results
             fi
             ;;
         3)
-            print_header "               BUAT LOKASI BARU               "
+            print_header "BUAT LOKASI BARU"
             input_location_data
-            
             if confirm_data; then
                 create_location "$location_name" "$location_description"
                 location_created=$?
-                
                 display_results
             fi
             ;;
         4)
-            print_header "               LOKASI YANG TERSEDIA               "
-            list_existing_locations
+            print_header "LOKASI YANG TERSEDIA"
+            list_locations || echo "Gagal mengambil daftar lokasi."
             ;;
         5)
-            # Exit
-            print_status "👋 Terima kasih telah menggunakan Liwirya Node Creator!"
+            print_status "Terima kasih telah menggunakan Liwirya Node Creator!"
             exit 0
             ;;
     esac
-    
-    log_message "Node creator script completed"
+
+    log_message "Script selesai"
 }
 
 main "$@"

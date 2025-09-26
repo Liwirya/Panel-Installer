@@ -10,14 +10,6 @@ sudo bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/ma
 
 ---
 
-## 🔑 Token Akses
-```
-Liwirya2025
-```
-Wajib dimasukkan saat diminta.
-
----
-
 ## ✅ OS yang Didukung
 | OS       | Versi               | Status        |
 |----------|---------------------|---------------|

@@ -72,11 +72,5 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/re
 
 ---
 
-## 📜 Lisensi
-MIT License — Open source.  
-Dibuat oleh [Liwirya](https://github.com/Liwirya).
-
----
-
 > 💡 **Tips**: Selalu backup sebelum ganti tema!  
-> 🚀 **Donasi**: [Trakteer Saya](https://trakteer.id/liwirya)
+> 🚀 **Donasi**: [Trakteer Saya](https://trakteer.id/liwiryadev_idn)

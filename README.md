@@ -29,7 +29,6 @@ sudo bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/ma
    sudo bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/install.sh)
    ```
 3. **Pilih opsi**:
-   - Install tema → masukkan token → tunggu → refresh browser.
    - Uninstall tema → kembalikan ke default.
 
 ---

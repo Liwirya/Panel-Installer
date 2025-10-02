@@ -63,5 +63,5 @@ bash <(curl -s https://raw.githubusercontent.com/Liwirya/Panel-Installer/main/re
 
 ---
 
-> 💡 **Tips**: Selalu backup sebelum ganti tema!  
+> 💡 **Tips**: Selalu backup!  
 > 🚀 **Donasi**: [Trakteer Saya](https://trakteer.id/liwiryadev_idn)
